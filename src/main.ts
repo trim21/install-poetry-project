@@ -1,31 +1,38 @@
-import * as os from 'os'
 import * as path from 'path'
+import * as fs from 'fs'
 
 import * as core from '@actions/core'
-import { exec } from '@actions/exec'
-import { getLatestVersion, getPythonVersion, getTmpDir } from './utils'
+
+import { getPythonVersion } from './utils'
 import { restore, setup } from './cache'
+import { install } from './poetry'
+import { PYTHONUSERBASE } from './constants'
 
 async function run (): Promise<void> {
-  let installedVersion = core.getInput('version')
-  // const preview = core.getInput('preview')
-  const tmpDir = getTmpDir()
+  const extras = core
+    .getInput('extras', { required: false })
+    .split('\n')
+    .filter(x => x !== '')
+  extras.sort()
+
   const pythonVersion = await getPythonVersion()
 
-  if (!installedVersion) {
-    installedVersion = await getLatestVersion()
-  }
+  await restore(pythonVersion, extras)
+  await install(extras)
+  await setup(pythonVersion, extras)
 
-  const flags = `--version=${installedVersion}`
+  core.exportVariable('PYTHONUSERBASE', PYTHONUSERBASE)
+  addPathForUserInstalledPackage()
+}
 
-  if (!(await restore(pythonVersion, installedVersion))) {
-    await exec(
-      `curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py -o ${tmpDir}/get-poetry.py`
-    )
-    await exec(`python ${tmpDir}/get-poetry.py --yes ${flags}`)
-    await setup(pythonVersion, installedVersion)
+function addPathForUserInstalledPackage () {
+  if (process.platform === 'linux' || process.platform === 'darwin') {
+    core.addPath(path.join(PYTHONUSERBASE, 'bin'))
+  } else if (process.platform === 'win32') {
+    fs.readdirSync(PYTHONUSERBASE).forEach(file => {
+      core.addPath(path.join(PYTHONUSERBASE, file, 'Scripts'))
+    })
   }
-  core.addPath(path.join(os.homedir(), '.poetry', 'bin'))
 }
 
 run().catch(e => {

@@ -2554,29 +2554,37 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const os = __importStar(__webpack_require__(87));
 const path = __importStar(__webpack_require__(622));
+const fs = __importStar(__webpack_require__(747));
 const core = __importStar(__webpack_require__(470));
-const exec_1 = __webpack_require__(986);
 const utils_1 = __webpack_require__(163);
 const cache_1 = __webpack_require__(722);
+const poetry_1 = __webpack_require__(919);
+const constants_1 = __webpack_require__(694);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        let installedVersion = core.getInput('version');
-        // const preview = core.getInput('preview')
-        const tmpDir = utils_1.getTmpDir();
+        const extras = core
+            .getInput('extras', { required: false })
+            .split('\n')
+            .filter(x => x !== '');
+        extras.sort();
         const pythonVersion = yield utils_1.getPythonVersion();
-        if (!installedVersion) {
-            installedVersion = yield utils_1.getLatestVersion();
-        }
-        const flags = `--version=${installedVersion}`;
-        if (!(yield cache_1.restore(pythonVersion, installedVersion))) {
-            yield exec_1.exec(`curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py -o ${tmpDir}/get-poetry.py`);
-            yield exec_1.exec(`python ${tmpDir}/get-poetry.py --yes ${flags}`);
-            yield cache_1.setup(pythonVersion, installedVersion);
-        }
-        core.addPath(path.join(os.homedir(), '.poetry', 'bin'));
+        yield cache_1.restore(pythonVersion, extras);
+        yield poetry_1.install(extras);
+        yield cache_1.setup(pythonVersion, extras);
+        core.exportVariable('PYTHONUSERBASE', constants_1.PYTHONUSERBASE);
+        addPathForUserInstalledPackage();
     });
+}
+function addPathForUserInstalledPackage() {
+    if (process.platform === 'linux' || process.platform === 'darwin') {
+        core.addPath(path.join(constants_1.PYTHONUSERBASE, 'bin'));
+    }
+    else if (process.platform === 'win32') {
+        fs.readdirSync(constants_1.PYTHONUSERBASE).forEach(file => {
+            core.addPath(path.join(constants_1.PYTHONUSERBASE, file, 'Scripts'));
+        });
+    }
 }
 run().catch(e => {
     core.setFailed(e);
@@ -2878,25 +2886,6 @@ exports.debug = debug; // for test
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -2907,30 +2896,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPythonVersion = exports.getTmpDir = exports.getLatestVersion = void 0;
-const os = __importStar(__webpack_require__(87));
-const path = __importStar(__webpack_require__(622));
-const fs = __importStar(__webpack_require__(747));
+exports.getPythonVersion = void 0;
 const exec_1 = __webpack_require__(986);
-const http_client_1 = __webpack_require__(539);
-function getLatestVersion() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const http = new http_client_1.HttpClient('actions install poetry');
-        const res = yield http.get('https://pypi.org/pypi/poetry/json');
-        const body = yield res.readBody();
-        const obj = JSON.parse(body);
-        return obj.info.version;
-    });
-}
-exports.getLatestVersion = getLatestVersion;
-function getTmpDir() {
-    const tmpBase = os.tmpdir();
-    const tmp = path.join(tmpBase, 'setup-poetry');
-    path.join(tmpBase, 'setup-poetry');
-    fs.mkdirSync(tmp);
-    return tmp;
-}
-exports.getTmpDir = getTmpDir;
 function getPythonVersion() {
     return __awaiter(this, void 0, void 0, function* () {
         let myOutput = '';
@@ -7034,6 +7001,39 @@ exports.saveCache = saveCache;
 
 /***/ }),
 
+/***/ 694:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PYTHONUSERBASE = void 0;
+const os = __importStar(__webpack_require__(87));
+const path = __importStar(__webpack_require__(622));
+exports.PYTHONUSERBASE = path.join(os.homedir(), '.py');
+
+
+/***/ }),
+
 /***/ 722:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -7069,26 +7069,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.restore = exports.setup = void 0;
-const os = __importStar(__webpack_require__(87));
-const path = __importStar(__webpack_require__(622));
 const cache = __importStar(__webpack_require__(692));
 const crypto = __importStar(__webpack_require__(417));
+const fs = __importStar(__webpack_require__(747));
 const core = __importStar(__webpack_require__(470));
-const paths = [path.join(os.homedir(), '.poetry')];
-function cacheKey(pyVersion, version) {
+const constants_1 = __webpack_require__(694);
+function cacheKey(pyVersion, extras) {
     const md5 = crypto.createHash('md5');
     const result = md5.update(pyVersion).digest('hex');
-    const key = `trim21-tool-poetry-1-${process.platform}-${result}-${version}`;
+    const key = `poetry-deps-1-${process.platform}-${result}-${poetryLockCacheKey()}-${extras.join('_')}`;
     core.info(`cache with key ${key}`);
     return key;
 }
-function setup(pythonVersion, poetryVersion) {
+function poetryLockCacheKey() {
+    const md5 = crypto.createHash('md5');
+    return md5.update(fs.readFileSync('poetry.lock').toString()).digest('hex');
+}
+function setup(pythonVersion, extras) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield cache.saveCache(paths, cacheKey(pythonVersion, poetryVersion));
+            yield cache.saveCache([constants_1.PYTHONUSERBASE], cacheKey(pythonVersion, extras));
         }
         catch (e) {
-            if (e instanceof cache.ReserveCacheError) {
+            if (e.toString().includes('reserveCache failed')) {
+                core.info(e.message);
                 return;
             }
             throw e;
@@ -7096,9 +7100,9 @@ function setup(pythonVersion, poetryVersion) {
     });
 }
 exports.setup = setup;
-function restore(pythonVersion, poetryVersion) {
+function restore(pythonVersion, extras) {
     return __awaiter(this, void 0, void 0, function* () {
-        return !!(yield cache.restoreCache(paths, cacheKey(pythonVersion, poetryVersion)));
+        return !!(yield cache.restoreCache([constants_1.PYTHONUSERBASE], cacheKey(pythonVersion, extras)));
     });
 }
 exports.restore = restore;
@@ -7310,6 +7314,45 @@ uuid.v1 = v1;
 uuid.v4 = v4;
 
 module.exports = uuid;
+
+
+/***/ }),
+
+/***/ 919:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.install = void 0;
+const exec_1 = __webpack_require__(986);
+const constants_1 = __webpack_require__(694);
+function install(extras) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const args = ['install'];
+        for (const extra of extras) {
+            args.push('-E', extra);
+        }
+        yield exec_1.exec('poetry', args, {
+            env: {
+                POETRY_VIRTUALENVS_CREATE: 'false',
+                PYTHONUSERBASE: constants_1.PYTHONUSERBASE,
+                PIP_USER: '1',
+                PATH: process.env.PATH || '',
+            }
+        });
+    });
+}
+exports.install = install;
 
 
 /***/ }),

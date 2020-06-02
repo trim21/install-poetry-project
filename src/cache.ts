@@ -1,31 +1,34 @@
-import * as os from 'os'
-import * as path from 'path'
-
 import * as cache from '@actions/cache'
 import * as crypto from 'crypto'
+import * as fs from 'fs'
 import * as core from '@actions/core'
+import { PYTHONUSERBASE } from './constants'
 
-const paths = [path.join(os.homedir(), '.poetry')]
-
-function cacheKey (pyVersion: string, version: string): string {
+function cacheKey (pyVersion: string, extras: string[]): string {
   const md5 = crypto.createHash('md5')
   const result = md5.update(pyVersion).digest('hex')
-  const key = `trim21-tool-poetry-1-${process.platform}-${result}-${version}`
+  const key = `poetry-deps-1-${process.platform}-${result}-${poetryLockCacheKey()}-${extras.join('_')}`
   core.info(`cache with key ${key}`)
   return key
 }
 
+function poetryLockCacheKey () {
+  const md5 = crypto.createHash('md5')
+  return md5.update(fs.readFileSync('poetry.lock').toString()).digest('hex')
+}
+
 export async function setup (
   pythonVersion: string,
-  poetryVersion: string
+  extras: string[]
 ): Promise<void> {
   try {
     await cache.saveCache(
-      paths,
-      cacheKey(pythonVersion, poetryVersion)
+      [PYTHONUSERBASE],
+      cacheKey(pythonVersion, extras)
     )
   } catch (e) {
-    if (e instanceof cache.ReserveCacheError) {
+    if (e.toString().includes('reserveCache failed')) {
+      core.info(e.message)
       return
     }
     throw e
@@ -34,10 +37,10 @@ export async function setup (
 
 export async function restore (
   pythonVersion: string,
-  poetryVersion: string
+  extras: string[]
 ): Promise<Boolean> {
   return !!(await cache.restoreCache(
-    paths,
-    cacheKey(pythonVersion, poetryVersion)
+    [PYTHONUSERBASE],
+    cacheKey(pythonVersion, extras)
   ))
 }

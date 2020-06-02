@@ -4,6 +4,7 @@ on: # rebuild any PRs and main branch changes
   push:
     branches:
       - master
+      - dev
       - 'releases/*'
 
 jobs:
@@ -29,18 +30,55 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        poetry_version: [1.0.4, 1.0.5, 1.1.0a1, '']
-        os: [ubuntu-latest,windows-latest,macos-latest]
+        extras: [group1, group2]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions/setup-python@v1
         with:
-          python-version: "3.7"
+          python-version: 3.7
+
+      - run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+          echo "::add-path::$HOME/.poetry/bin"
 
       - uses: ./
         with:
-          version: ${{ matrix.poetry_version }}
+          extras: |
+            ${{ matrix.extras }}
 
-      - run: poetry --version
+      - run: python tests/${{ matrix.extras }}.py
+
+      - run: pre-commit --version
+        if: "${{ matrix.extras == 'group2' }}"
+
+
+  test-multi-group: # make sure the action works on a clean machine without building
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+          echo "::add-path::$HOME/.poetry/bin"
+
+      - uses: ./
+        with:
+          extras: |
+            group1
+            group2
+
+      - run: python tests/group1.py
+      - run: python tests/group2.py
+      - run: pre-commit --version
