@@ -11,9 +11,7 @@ example: [test.yml](.github/workflows/test.yml)
   with:
     python-version: 3.7
 
-- run: |
-    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-    echo "::add-path::$HOME/.poetry/bin"
+- uses: Trim21/setup-poetry@v1
 
 - uses: Trim21/install-poetry-project@v1
   with:
