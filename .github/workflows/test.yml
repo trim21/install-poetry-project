@@ -1,0 +1,46 @@
+name: "build-test"
+on: # rebuild any PRs and main branch changes
+  pull_request:
+  push:
+    branches:
+      - master
+      - 'releases/*'
+
+jobs:
+  build: # make sure build/ci work properly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/cache@v2
+        id: restore-cache
+        with:
+          path: |
+            ./node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: npm ci
+        if: steps.restore-cache.outputs.cache-hit != 'true'
+      - run: npm run all
+
+  test-run: # make sure the action works on a clean machine without building
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        poetry_version: [1.0.4, 1.0.5, 1.1.0a1, '']
+        os: [ubuntu-latest,windows-latest,macos-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v1
+        with:
+          python-version: "3.7"
+
+      - uses: ./
+        with:
+          version: ${{ matrix.poetry_version }}
+
+      - run: poetry --version
