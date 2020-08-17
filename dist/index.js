@@ -40765,7 +40765,7 @@ function setup(pythonVersion, extras) {
 exports.setup = setup;
 function restore(pythonVersion, extras) {
     return __awaiter(this, void 0, void 0, function* () {
-        return !!(yield cache.restoreCache([constants_1.PYTHONUSERBASE], cacheKey(pythonVersion, extras)));
+        return !!(yield cache.restoreCache([constants_1.PYTHONUSERBASE], cacheKey(pythonVersion, extras), [cacheKey(pythonVersion, [])]));
     });
 }
 exports.restore = restore;
