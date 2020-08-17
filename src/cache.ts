@@ -36,7 +36,6 @@ export async function restore (
   pythonVersion: string,
   extras: string[]
 ): Promise<Boolean> {
-
   const primaryKey = cacheKey(pythonVersion, extras)
   const fallbackKeys = [cacheKey(pythonVersion, [])]
   core.info(`restore cache with key ${primaryKey}`)
