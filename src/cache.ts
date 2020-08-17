@@ -38,6 +38,7 @@ export async function restore (
 ): Promise<Boolean> {
   return !!(await cache.restoreCache(
     [PYTHONUSERBASE],
-    cacheKey(pythonVersion, extras)
+    cacheKey(pythonVersion, extras),
+    [cacheKey(pythonVersion, [])]
   ))
 }
