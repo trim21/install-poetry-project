@@ -40741,9 +40741,7 @@ const core = __importStar(__webpack_require__(470));
 const constants_1 = __webpack_require__(694);
 const utils_1 = __webpack_require__(163);
 function cacheKey(pyVersion, extras) {
-    const key = `poetry-deps-1-${process.platform}-${utils_1.hashString(pyVersion)}-${poetryLockCacheKey()}-${utils_1.hashString(extras.join('_'))}`;
-    core.info(`cache with key ${key}`);
-    return key;
+    return `poetry-deps-1-${process.platform}-${utils_1.hashString(pyVersion)}-${poetryLockCacheKey()}-${utils_1.hashString(extras.join('_'))}`;
 }
 function poetryLockCacheKey() {
     return utils_1.hashString(fs.readFileSync('poetry.lock').toString());
@@ -40751,7 +40749,9 @@ function poetryLockCacheKey() {
 function setup(pythonVersion, extras) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield cache.saveCache([constants_1.PYTHONUSERBASE], cacheKey(pythonVersion, extras));
+            const key = cacheKey(pythonVersion, extras);
+            core.info(`cache with key ${key}`);
+            yield cache.saveCache([constants_1.PYTHONUSERBASE], key);
         }
         catch (e) {
             if (e.toString().includes('reserveCache failed')) {
@@ -40765,7 +40765,11 @@ function setup(pythonVersion, extras) {
 exports.setup = setup;
 function restore(pythonVersion, extras) {
     return __awaiter(this, void 0, void 0, function* () {
-        return !!(yield cache.restoreCache([constants_1.PYTHONUSERBASE], cacheKey(pythonVersion, extras), [cacheKey(pythonVersion, [])]));
+        const primaryKey = cacheKey(pythonVersion, extras);
+        const fallbackKeys = [cacheKey(pythonVersion, [])];
+        core.info(`restore cache with key ${primaryKey}`);
+        core.info(`fallback to ${fallbackKeys}`);
+        return !!(yield cache.restoreCache([constants_1.PYTHONUSERBASE], primaryKey, fallbackKeys));
     });
 }
 exports.restore = restore;
