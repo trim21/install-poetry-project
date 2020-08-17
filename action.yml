@@ -3,7 +3,7 @@ description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
   extras:              # change this
-    description: 'input description here'
+    description: 'extras you want to install'
     default: ''
     required: false
 
