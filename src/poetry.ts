@@ -1,5 +1,13 @@
 import { exec } from '@actions/exec'
-import { PYTHONUSERBASE } from './constants'
+
+export async function config (key: string, value: string): Promise<void> {
+  const args = ['config', key, value]
+  await exec('poetry', args, {
+    env: {
+      PATH: process.env.PATH || '',
+    }
+  })
+}
 
 export async function install (extras: string[]): Promise<void> {
   const args = ['install']
@@ -8,10 +16,8 @@ export async function install (extras: string[]): Promise<void> {
   }
   await exec('poetry', args, {
     env: {
-      POETRY_VIRTUALENVS_CREATE: 'false',
-      PYTHONUSERBASE,
-      PIP_USER: '1',
       PATH: process.env.PATH || '',
+      PYTHONIOENCODING: 'utf-8',
     }
   })
 }

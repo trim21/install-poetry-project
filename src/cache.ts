@@ -1,11 +1,11 @@
 import * as cache from '@actions/cache'
 import * as fs from 'fs'
 import * as core from '@actions/core'
-import { PYTHONUSERBASE } from './constants'
+import { IN_PROJECT_VENV_PATH } from './constants'
 import { hashString } from './utils'
 
 function cacheKey (pyVersion: string, extras: string[]): string {
-  return `poetry-deps-1-${process.platform}-${hashString(pyVersion)}-${poetryLockCacheKey()}-${hashString(extras.join('_'))}`
+  return `poetry-deps-2-${process.platform}-${hashString(pyVersion)}-${poetryLockCacheKey()}-${hashString(extras.join('_'))}`
 }
 
 function poetryLockCacheKey () {
@@ -20,7 +20,7 @@ export async function setup (
     const key = cacheKey(pythonVersion, extras)
     core.info(`cache with key ${key}`)
     await cache.saveCache(
-      [PYTHONUSERBASE],
+      [IN_PROJECT_VENV_PATH],
       key
     )
   } catch (e) {
@@ -42,7 +42,7 @@ export async function restore (
   core.info(`fallback to ${fallbackKeys}`)
 
   return !!(await cache.restoreCache(
-    [PYTHONUSERBASE],
+    [IN_PROJECT_VENV_PATH],
     primaryKey,
     fallbackKeys
   ))

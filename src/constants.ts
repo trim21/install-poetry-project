@@ -1,4 +1,3 @@
-import * as os from 'os'
 import * as path from 'path'
 
-export const PYTHONUSERBASE = path.join(os.homedir(), '.py')
+export const IN_PROJECT_VENV_PATH = path.join(process.cwd(), '.venv')
