@@ -1384,7 +1384,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //# sourceMappingURL=HttpTextPropagator.js.map
 
 /***/ }),
-/* 34 */,
+/* 34 */
+/***/ (function(module) {
+
+module.exports = require("https");
+
+/***/ }),
 /* 35 */,
 /* 36 */,
 /* 37 */,
@@ -3429,13 +3434,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const path = __importStar(__webpack_require__(622));
-const fs = __importStar(__webpack_require__(747));
 const core = __importStar(__webpack_require__(470));
 const utils_1 = __webpack_require__(163);
 const cache_1 = __webpack_require__(722);
-const poetry_1 = __webpack_require__(166);
-const constants_1 = __webpack_require__(196);
+const poetry = __importStar(__webpack_require__(166));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const extras = core
@@ -3445,21 +3447,11 @@ function run() {
         extras.sort();
         const pythonVersion = yield utils_1.getPythonVersion();
         yield cache_1.restore(pythonVersion, extras);
-        yield poetry_1.install(extras);
+        yield poetry.config('virtualenvs.in-project', 'true');
+        yield poetry.install(extras);
         yield cache_1.setup(pythonVersion, extras);
-        core.exportVariable('PYTHONUSERBASE', constants_1.PYTHONUSERBASE);
-        addPathForUserInstalledPackage();
+        utils_1.enableVenv();
     });
-}
-function addPathForUserInstalledPackage() {
-    if (process.platform === 'linux' || process.platform === 'darwin') {
-        core.addPath(path.join(constants_1.PYTHONUSERBASE, 'bin'));
-    }
-    else if (process.platform === 'win32') {
-        fs.readdirSync(constants_1.PYTHONUSERBASE).forEach(file => {
-            core.addPath(path.join(constants_1.PYTHONUSERBASE, file, 'Scripts'));
-        });
-    }
 }
 run().catch(e => {
     core.setFailed(e);
@@ -3570,7 +3562,7 @@ module.exports = function nodeRNG() {
 var net = __webpack_require__(631);
 var tls = __webpack_require__(16);
 var http = __webpack_require__(605);
-var https = __webpack_require__(211);
+var https = __webpack_require__(34);
 var events = __webpack_require__(614);
 var assert = __webpack_require__(357);
 var util = __webpack_require__(669);
@@ -4502,6 +4494,25 @@ exports.NOOP_TRACER_PROVIDER = new NoopTracerProvider();
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -4515,9 +4526,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hashString = exports.getPythonVersion = void 0;
+exports.enableVenv = exports.hashString = exports.getPythonVersion = void 0;
 const exec_1 = __webpack_require__(986);
 const crypto_1 = __importDefault(__webpack_require__(417));
+const constants_1 = __webpack_require__(211);
+const core = __importStar(__webpack_require__(470));
+const path_1 = __importDefault(__webpack_require__(622));
 function getPythonVersion() {
     return __awaiter(this, void 0, void 0, function* () {
         let myOutput = '';
@@ -4539,6 +4553,15 @@ function hashString(s) {
     return md5.update(s).digest('hex');
 }
 exports.hashString = hashString;
+function enableVenv() {
+    if (process.platform === 'linux' || process.platform === 'darwin') {
+        core.addPath(path_1.default.join(constants_1.IN_PROJECT_VENV_PATH, 'bin'));
+    }
+    else if (process.platform === 'win32') {
+        core.addPath(path_1.default.join(constants_1.IN_PROJECT_VENV_PATH, 'Scripts'));
+    }
+}
+exports.enableVenv = enableVenv;
 
 
 /***/ }),
@@ -4582,9 +4605,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.install = void 0;
+exports.install = exports.config = void 0;
 const exec_1 = __webpack_require__(986);
-const constants_1 = __webpack_require__(196);
+function config(key, value) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const args = ['config', key, value];
+        yield exec_1.exec('poetry', args, {
+            env: {
+                PATH: process.env.PATH || '',
+            }
+        });
+    });
+}
+exports.config = config;
 function install(extras) {
     return __awaiter(this, void 0, void 0, function* () {
         const args = ['install'];
@@ -4593,10 +4626,8 @@ function install(extras) {
         }
         yield exec_1.exec('poetry', args, {
             env: {
-                POETRY_VIRTUALENVS_CREATE: 'false',
-                PYTHONUSERBASE: constants_1.PYTHONUSERBASE,
-                PIP_USER: '1',
                 PATH: process.env.PATH || '',
+                PYTHONIOENCODING: 'utf-8',
             }
         });
     });
@@ -4769,38 +4800,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /* 193 */,
 /* 194 */,
 /* 195 */,
-/* 196 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PYTHONUSERBASE = void 0;
-const os = __importStar(__webpack_require__(87));
-const path = __importStar(__webpack_require__(622));
-exports.PYTHONUSERBASE = path.join(os.homedir(), '.py');
-
-
-/***/ }),
+/* 196 */,
 /* 197 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -4883,9 +4883,34 @@ exports.default = _default;
 
 /***/ }),
 /* 211 */
-/***/ (function(module) {
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
-module.exports = require("https");
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.IN_PROJECT_VENV_PATH = void 0;
+const path = __importStar(__webpack_require__(622));
+exports.IN_PROJECT_VENV_PATH = path.join(process.cwd(), '.venv');
+
 
 /***/ }),
 /* 212 */,
@@ -37185,7 +37210,7 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var Stream = _interopDefault(__webpack_require__(794));
 var http = _interopDefault(__webpack_require__(605));
 var Url = _interopDefault(__webpack_require__(835));
-var https = _interopDefault(__webpack_require__(211));
+var https = _interopDefault(__webpack_require__(34));
 var zlib = _interopDefault(__webpack_require__(761));
 
 // Based on https://github.com/tmpvar/jsdom/blob/aa85b2abf07766ff7bf5c1f6daafb3726f2f2db5/lib/jsdom/living/blob.js
@@ -39878,7 +39903,7 @@ exports.getDownloadOptions = getDownloadOptions;
 Object.defineProperty(exports, "__esModule", { value: true });
 const url = __webpack_require__(835);
 const http = __webpack_require__(605);
-const https = __webpack_require__(211);
+const https = __webpack_require__(34);
 const pm = __webpack_require__(950);
 let tunnel;
 var HttpCodes;
@@ -44715,10 +44740,10 @@ exports.restore = exports.setup = void 0;
 const cache = __importStar(__webpack_require__(692));
 const fs = __importStar(__webpack_require__(747));
 const core = __importStar(__webpack_require__(470));
-const constants_1 = __webpack_require__(196);
+const constants_1 = __webpack_require__(211);
 const utils_1 = __webpack_require__(163);
 function cacheKey(pyVersion, extras) {
-    return `poetry-deps-1-${process.platform}-${utils_1.hashString(pyVersion)}-${poetryLockCacheKey()}-${utils_1.hashString(extras.join('_'))}`;
+    return `poetry-deps-2-${process.platform}-${utils_1.hashString(pyVersion)}-${poetryLockCacheKey()}-${utils_1.hashString(extras.join('_'))}`;
 }
 function poetryLockCacheKey() {
     return utils_1.hashString(fs.readFileSync('poetry.lock').toString());
@@ -44728,7 +44753,7 @@ function setup(pythonVersion, extras) {
         try {
             const key = cacheKey(pythonVersion, extras);
             core.info(`cache with key ${key}`);
-            yield cache.saveCache([constants_1.PYTHONUSERBASE], key);
+            yield cache.saveCache([constants_1.IN_PROJECT_VENV_PATH], key);
         }
         catch (e) {
             if (e.toString().includes('reserveCache failed')) {
@@ -44746,7 +44771,7 @@ function restore(pythonVersion, extras) {
         const fallbackKeys = [cacheKey(pythonVersion, [])];
         core.info(`restore cache with key ${primaryKey}`);
         core.info(`fallback to ${fallbackKeys}`);
-        return !!(yield cache.restoreCache([constants_1.PYTHONUSERBASE], primaryKey, fallbackKeys));
+        return !!(yield cache.restoreCache([constants_1.IN_PROJECT_VENV_PATH], primaryKey, fallbackKeys));
     });
 }
 exports.restore = restore;
@@ -46419,7 +46444,7 @@ var CombinedStream = __webpack_require__(547);
 var util = __webpack_require__(669);
 var path = __webpack_require__(622);
 var http = __webpack_require__(605);
-var https = __webpack_require__(211);
+var https = __webpack_require__(34);
 var parseUrl = __webpack_require__(835).parse;
 var fs = __webpack_require__(747);
 var mime = __webpack_require__(779);
@@ -50921,7 +50946,7 @@ var uuid = __webpack_require__(585);
 var tslib = __webpack_require__(865);
 var tough = __webpack_require__(393);
 var http = __webpack_require__(605);
-var https = __webpack_require__(211);
+var https = __webpack_require__(34);
 var node_fetch = _interopDefault(__webpack_require__(454));
 var abortController = __webpack_require__(106);
 var FormData = _interopDefault(__webpack_require__(790));
