@@ -41,7 +41,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        extras: [ group1, group2 ]
         os: [ ubuntu-latest, windows-latest, macos-latest ]
         python_version: [ '3.6','3.7','3.8' ]
 
@@ -62,13 +61,11 @@ jobs:
 
       - uses: ./
         with:
-          extras: |
-            ${{ matrix.extras }}
+          extras: group2
 
-      - run: python tests/${{ matrix.extras }}.py
+      - run: python tests/group2.py
 
       - run: pre-commit --version
-        if: "${{ matrix.extras == 'group2' }}"
 
   test-multi-group: # make sure the action works on a clean machine without building
     needs: build
@@ -102,3 +99,27 @@ jobs:
       - run: python tests/group1.py
       - run: python tests/group2.py
       - run: pre-commit --version
+
+  test-run-lower-poetry: # make sure the action works on a clean machine without building
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.8'
+
+      - run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python - --version 1.0.5
+          echo "::add-path::$HOME/.poetry/bin"
+
+      - uses: ./
+        with:
+          extras: group1
+
+      - run: python tests/group1.py
