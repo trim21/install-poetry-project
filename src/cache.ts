@@ -3,6 +3,7 @@ import * as fs from 'fs'
 import * as core from '@actions/core'
 import { IN_PROJECT_VENV_PATH } from './constants'
 import { hashString } from './utils'
+import { ReserveCacheError } from '@actions/cache'
 
 function cacheKeyComponents (pyVersion: string, extras: string[]): string[] {
   return [
@@ -41,9 +42,11 @@ export async function setup (
       key
     )
   } catch (e) {
-    if (e.toString().includes('reserveCache failed')) {
-      core.info(e.message)
-      return
+    if (e.name === ReserveCacheError.name) {
+      if (e.toString().includes('another job may be creating this cache')) {
+        return
+      }
+      throw e
     }
     throw e
   }
