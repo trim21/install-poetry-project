@@ -46870,6 +46870,7 @@ const fs = __importStar(__webpack_require__(747));
 const core = __importStar(__webpack_require__(470));
 const constants_1 = __webpack_require__(211);
 const utils_1 = __webpack_require__(163);
+const cache_1 = __webpack_require__(692);
 function cacheKeyComponents(pyVersion, extras) {
     return [
         'poetry',
@@ -46900,9 +46901,11 @@ function setup(pythonVersion, extras) {
             yield cache.saveCache([constants_1.IN_PROJECT_VENV_PATH], key);
         }
         catch (e) {
-            if (e.toString().includes('reserveCache failed')) {
-                core.info(e.message);
-                return;
+            if (e.name === cache_1.ReserveCacheError.name) {
+                if (e.toString().includes('another job may be creating this cache')) {
+                    return;
+                }
+                throw e;
             }
             throw e;
         }
