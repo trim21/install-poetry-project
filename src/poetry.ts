@@ -10,10 +10,13 @@ export async function config (key: string, value: string): Promise<void> {
   })
 }
 
-export async function install (extras: string[]): Promise<void> {
+export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
   const args = ['install']
   for (const extra of extras) {
     args.push('-E', extra)
+  }
+  if (additionalArgs.length) {
+    args.push(...additionalArgs)
   }
 
   if (semver.gte(await getVersion(), '1.1.0')) {

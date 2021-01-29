@@ -1,12 +1,15 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: "Your name here"
+description: "Provide a description here"
+author: "Your name or organization here"
 inputs:
-  extras:              # change this
-    description: 'extras you want to install'
-    default: ''
+  extras: # change this
+    description: "extras you want to install"
+    default: ""
     required: false
-
+  install_args: # change this
+    description: "extras you want to install"
+    default: ""
+    required: false
 runs:
-  using: 'node12'
-  main: 'dist/index.js'
+  using: "node12"
+  main: "dist/index.js"

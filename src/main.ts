@@ -11,11 +11,16 @@ async function run (): Promise<void> {
     .filter(x => x !== '')
   extras.sort()
 
+  const additionalArgs = core
+    .getInput('install_args', { required: false })
+    .split(' ')
+    .filter(x => x !== '')
+
   const pythonVersion = await getPythonVersion()
 
   await restore(pythonVersion, extras)
   await poetry.config('virtualenvs.in-project', 'true')
-  await poetry.install(extras)
+  await poetry.install(extras, additionalArgs)
   await setup(pythonVersion, extras)
   enableVenv()
 }

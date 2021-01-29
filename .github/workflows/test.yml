@@ -59,6 +59,7 @@ jobs:
       - uses: ./
         with:
           extras: group2
+          install_args: '-vvv'
 
       - run: python tests/group2.py
 
@@ -88,6 +89,7 @@ jobs:
           extras: |
             group1
             group2
+          install_args: '-vvv'
 
       - run: python tests/group1.py
       - run: python tests/group2.py
@@ -110,6 +112,7 @@ jobs:
 
       - uses: ./
         with:
+          install_args: '-vvv'
           extras: group1
 
       - run: python tests/group1.py

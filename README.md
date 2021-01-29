@@ -18,4 +18,5 @@ example: [test.yml](.github/workflows/test.yml)
     extras: |
       group1
       group2
+      # install_args: '-vvv'
 ```
