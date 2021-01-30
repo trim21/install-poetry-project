@@ -1,5 +1,6 @@
 import * as cache from '@actions/cache'
 import * as fs from 'fs'
+import * as os from 'os'
 import * as core from '@actions/core'
 import { IN_PROJECT_VENV_PATH } from './constants'
 import { hashString } from './utils'
@@ -10,7 +11,7 @@ function cacheKeyComponents (pyVersion: string, extras: string[]): string[] {
     'poetry',
     'deps',
     '3',
-    process.platform,
+    hashString(os.platform() + os.arch() + os.release()),
     hashString(pyVersion),
     poetryLockCacheKey(),
     hashString(extras.join('_')),
@@ -37,6 +38,7 @@ export async function setup (
   try {
     const key = cacheKeyComponents(pythonVersion, extras).join('-')
     core.info(`cache with key ${key}`)
+    core.debug(IN_PROJECT_VENV_PATH)
     await cache.saveCache(
       [IN_PROJECT_VENV_PATH],
       key
@@ -60,7 +62,7 @@ export async function restore (
   const fbKeys: string[] = fallbackKeys(pythonVersion, extras)
   core.info(`restore cache with key ${primaryKey}`)
   core.info(`fallback to ${fbKeys}`)
-
+  core.debug(IN_PROJECT_VENV_PATH)
   return !!(await cache.restoreCache(
     [IN_PROJECT_VENV_PATH],
     primaryKey,
