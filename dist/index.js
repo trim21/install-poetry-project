@@ -4018,10 +4018,14 @@ function run() {
             .split('\n')
             .filter(x => x !== '');
         extras.sort();
+        const additionalArgs = core
+            .getInput('install_args', { required: false })
+            .split(' ')
+            .filter(x => x !== '');
         const pythonVersion = yield utils_1.getPythonVersion();
         yield cache_1.restore(pythonVersion, extras);
         yield poetry.config('virtualenvs.in-project', 'true');
-        yield poetry.install(extras);
+        yield poetry.install(extras, additionalArgs);
         yield cache_1.setup(pythonVersion, extras);
         utils_1.enableVenv();
     });
@@ -5304,11 +5308,14 @@ function config(key, value) {
     });
 }
 exports.config = config;
-function install(extras) {
+function install(extras, additionalArgs) {
     return __awaiter(this, void 0, void 0, function* () {
         const args = ['install'];
         for (const extra of extras) {
             args.push('-E', extra);
+        }
+        if (additionalArgs.length) {
+            args.push(...additionalArgs);
         }
         if (semver.gte(yield getVersion(), '1.1.0')) {
             args.push('--remove-untracked');
@@ -46867,6 +46874,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.restore = exports.setup = void 0;
 const cache = __importStar(__webpack_require__(692));
 const fs = __importStar(__webpack_require__(747));
+const os = __importStar(__webpack_require__(87));
 const core = __importStar(__webpack_require__(470));
 const constants_1 = __webpack_require__(211);
 const utils_1 = __webpack_require__(163);
@@ -46876,7 +46884,7 @@ function cacheKeyComponents(pyVersion, extras) {
         'poetry',
         'deps',
         '3',
-        process.platform,
+        utils_1.hashString(os.platform() + os.arch() + os.release()),
         utils_1.hashString(pyVersion),
         poetryLockCacheKey(),
         utils_1.hashString(extras.join('_')),
@@ -46898,6 +46906,7 @@ function setup(pythonVersion, extras) {
         try {
             const key = cacheKeyComponents(pythonVersion, extras).join('-');
             core.info(`cache with key ${key}`);
+            core.debug(constants_1.IN_PROJECT_VENV_PATH);
             yield cache.saveCache([constants_1.IN_PROJECT_VENV_PATH], key);
         }
         catch (e) {
@@ -46918,6 +46927,7 @@ function restore(pythonVersion, extras) {
         const fbKeys = fallbackKeys(pythonVersion, extras);
         core.info(`restore cache with key ${primaryKey}`);
         core.info(`fallback to ${fbKeys}`);
+        core.debug(constants_1.IN_PROJECT_VENV_PATH);
         return !!(yield cache.restoreCache([constants_1.IN_PROJECT_VENV_PATH], primaryKey, fbKeys));
     });
 }
