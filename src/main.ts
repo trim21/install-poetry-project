@@ -17,11 +17,14 @@ async function run (): Promise<void> {
     .filter(x => x !== '')
 
   const pythonVersion = await getPythonVersion()
-
-  await restore(pythonVersion, extras)
+  if (process.platform !== 'win32') {
+    await restore(pythonVersion, extras)
+  }
   await poetry.config('virtualenvs.in-project', 'true')
   await poetry.install(extras, additionalArgs)
-  await setup(pythonVersion, extras)
+  if (process.platform !== 'win32') {
+    await setup(pythonVersion, extras)
+  }
   enableVenv()
 }
 
