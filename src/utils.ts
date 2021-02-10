@@ -20,7 +20,7 @@ export async function getPythonVersion (): Promise<string> {
 }
 
 export function hashString (s: string): string {
-  const md5 = crypto.createHash('md5')
+  const md5 = crypto.createHash('sha256')
   return md5.update(s).digest('hex')
 }
 
@@ -30,4 +30,8 @@ export function enableVenv (): void {
   } else if (process.platform === 'win32') {
     core.addPath(path.join(IN_PROJECT_VENV_PATH, 'Scripts'))
   }
+}
+
+export function isWindows (): boolean {
+  return process.platform === 'win32'
 }

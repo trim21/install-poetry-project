@@ -10,7 +10,7 @@ function cacheKeyComponents (pyVersion: string, extras: string[]): string[] {
   return [
     'poetry',
     'deps',
-    '3',
+    '4',
     hashString(os.platform() + os.arch() + os.release()),
     hashString(pyVersion),
     poetryLockCacheKey(),
@@ -63,9 +63,10 @@ export async function restore (
   core.info(`restore cache with key ${primaryKey}`)
   core.info(`fallback to ${fbKeys}`)
   core.debug(IN_PROJECT_VENV_PATH)
-  return !!(await cache.restoreCache(
+  const hitKey = await cache.restoreCache(
     [IN_PROJECT_VENV_PATH],
     primaryKey,
     fbKeys
-  ))
+  )
+  return hitKey === primaryKey
 }
