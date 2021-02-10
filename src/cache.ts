@@ -10,7 +10,7 @@ function cacheKeyComponents (pyVersion: string, extras: string[]): string[] {
   return [
     'poetry',
     'deps',
-    '4',
+    '5',
     hashString(os.platform() + os.arch() + os.release()),
     hashString(pyVersion),
     poetryLockCacheKey(),

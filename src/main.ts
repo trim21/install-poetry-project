@@ -3,6 +3,8 @@ import * as core from '@actions/core'
 import { enableVenv, getPythonVersion, isWindows } from './utils'
 import { restore, setup } from './cache'
 import * as poetry from './poetry'
+import { existsSync } from 'fs'
+import { exec } from '@actions/exec'
 
 async function run (): Promise<void> {
   const extras = core
@@ -19,16 +21,15 @@ async function run (): Promise<void> {
   const pythonVersion = await getPythonVersion()
   core.info(`python version: ${pythonVersion}`)
 
-  if (!isWindows()) { // skip cache on windows, there is a bug when caching executable.
-    await restore(pythonVersion, extras)
-  }
+  await restore(pythonVersion, extras)
 
   await poetry.config('virtualenvs.in-project', 'true')
+  if (isWindows() && !existsSync('.venv')) {
+    await exec('python -m venv .venv')
+  }
   await poetry.install(extras, additionalArgs)
 
-  if (!isWindows()) {
-    await setup(pythonVersion, extras)
-  }
+  await setup(pythonVersion, extras)
   enableVenv()
 }
 
