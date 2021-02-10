@@ -3410,6 +3410,7 @@ function saveCache(cacheId, archivePath, options) {
         // Commit Cache
         core.debug('Commiting cache');
         const cacheSize = utils.getArchiveFileSizeIsBytes(archivePath);
+        core.info(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
         const commitCacheResponse = yield commitCache(httpClient, cacheId, cacheSize);
         if (!requestUtils_1.isSuccessStatusCode(commitCacheResponse.statusCode)) {
             throw new Error(`Cache service responded with ${commitCacheResponse.statusCode} during commit cache.`);
@@ -4023,10 +4024,15 @@ function run() {
             .split(' ')
             .filter(x => x !== '');
         const pythonVersion = yield utils_1.getPythonVersion();
-        yield cache_1.restore(pythonVersion, extras);
+        core.info(`python version: ${pythonVersion}`);
+        if (!utils_1.isWindows()) { // skip cache on windows, there is a bug when caching executable.
+            yield cache_1.restore(pythonVersion, extras);
+        }
         yield poetry.config('virtualenvs.in-project', 'true');
         yield poetry.install(extras, additionalArgs);
-        yield cache_1.setup(pythonVersion, extras);
+        if (!utils_1.isWindows()) {
+            yield cache_1.setup(pythonVersion, extras);
+        }
         utils_1.enableVenv();
     });
 }
@@ -5131,7 +5137,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.enableVenv = exports.hashString = exports.getPythonVersion = void 0;
+exports.isWindows = exports.enableVenv = exports.hashString = exports.getPythonVersion = void 0;
 const exec_1 = __webpack_require__(986);
 const crypto_1 = __importDefault(__webpack_require__(417));
 const constants_1 = __webpack_require__(211);
@@ -5154,7 +5160,7 @@ function getPythonVersion() {
 }
 exports.getPythonVersion = getPythonVersion;
 function hashString(s) {
-    const md5 = crypto_1.default.createHash('md5');
+    const md5 = crypto_1.default.createHash('sha256');
     return md5.update(s).digest('hex');
 }
 exports.hashString = hashString;
@@ -5167,6 +5173,10 @@ function enableVenv() {
     }
 }
 exports.enableVenv = enableVenv;
+function isWindows() {
+    return process.platform === 'win32';
+}
+exports.isWindows = isWindows;
 
 
 /***/ }),
@@ -6262,6 +6272,52 @@ var AzureKeyCredential = /** @class */ (function () {
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 /**
+ * A static-signature-based credential that supports updating
+ * the underlying signature value.
+ */
+var AzureSASCredential = /** @class */ (function () {
+    /**
+     * Create an instance of an AzureSASCredential for use
+     * with a service client.
+     *
+     * @param signature - The initial value of the shared access signature to use in authentication
+     */
+    function AzureSASCredential(signature) {
+        if (!signature) {
+            throw new Error("shared access signature must be a non-empty string");
+        }
+        this._signature = signature;
+    }
+    Object.defineProperty(AzureSASCredential.prototype, "signature", {
+        /**
+         * The value of the shared access signature to be used in authentication
+         */
+        get: function () {
+            return this._signature;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    /**
+     * Change the value of the signature.
+     *
+     * Updates will take effect upon the next request after
+     * updating the signature value.
+     *
+     * @param newSignature - The new shared access signature value to be used
+     */
+    AzureSASCredential.prototype.update = function (newSignature) {
+        if (!newSignature) {
+            throw new Error("shared access signature must be a non-empty string");
+        }
+        this._signature = newSignature;
+    };
+    return AzureSASCredential;
+}());
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+/**
  * Tests an object to determine whether it implements TokenCredential.
  *
  * @param credential - The assumed TokenCredential to be tested.
@@ -6279,6 +6335,7 @@ function isTokenCredential(credential) {
 }
 
 exports.AzureKeyCredential = AzureKeyCredential;
+exports.AzureSASCredential = AzureSASCredential;
 exports.isTokenCredential = isTokenCredential;
 //# sourceMappingURL=index.js.map
 
@@ -21345,7 +21402,7 @@ var logger = logger$1.createClientLogger("storage-blob");
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-var SDK_VERSION = "12.4.0";
+var SDK_VERSION = "12.4.1";
 var SERVICE_VERSION = "2020-04-08";
 var BLOCK_BLOB_MAX_UPLOAD_BLOB_BYTES = 256 * 1024 * 1024; // 256MB
 var BLOCK_BLOB_MAX_STAGE_BLOCK_BYTES = 4000 * 1024 * 1024; // 4000MB
@@ -22420,11 +22477,7 @@ var StorageRetryPolicy = /** @class */ (function (_super) {
                 var retriableError = retriableErrors_1[_i];
                 if (err.name.toUpperCase().includes(retriableError) ||
                     err.message.toUpperCase().includes(retriableError) ||
-                    (err.code &&
-                        err.code
-                            .toString()
-                            .toUpperCase()
-                            .includes(retriableError))) {
+                    (err.code && err.code.toString().toUpperCase() === retriableError)) {
                     logger.info("RetryPolicy: Network error " + retriableError + " found, will retry.");
                     return true;
                 }
@@ -22444,6 +22497,10 @@ var StorageRetryPolicy = /** @class */ (function (_super) {
                 logger.info("RetryPolicy: Will retry for status code " + statusCode + ".");
                 return true;
             }
+        }
+        if ((err === null || err === void 0 ? void 0 : err.code) === "PARSE_ERROR" && (err === null || err === void 0 ? void 0 : err.message.startsWith("Error \"Error: Unclosed root tag"))) {
+            logger.info("RetryPolicy: Incomplete XML response likely due to service timeout, will retry.");
+            return true;
         }
         return false;
     };
@@ -22807,8 +22864,11 @@ function newPipeline(credential, pipelineOptions) {
         telemetryPolicy,
         coreHttp.generateClientRequestIdPolicy(),
         new StorageBrowserPolicyFactory(),
-        coreHttp.deserializationPolicy(),
         new StorageRetryPolicyFactory(pipelineOptions.retryOptions),
+        // Default deserializationPolicy is provided by protocol layer
+        // Use customized XML char key of "#" so we could deserialize metadata
+        // with "_" key
+        coreHttp.deserializationPolicy(undefined, { xmlCharKey: "#" }),
         coreHttp.logPolicy({
             logger: logger.info,
             allowedHeaderNames: StorageBlobLoggingAllowedHeaderNames,
@@ -22827,7 +22887,6 @@ function newPipeline(credential, pipelineOptions) {
 }
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
-var ABORT_ERROR = new abortController.AbortError("The operation was aborted.");
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
  *
@@ -22851,36 +22910,9 @@ var RetriableReadableStream = /** @class */ (function (_super) {
      */
     function RetriableReadableStream(source, getter, offset, count, options) {
         if (options === void 0) { options = {}; }
-        var _this = _super.call(this) || this;
+        var _this = _super.call(this, { highWaterMark: options.highWaterMark }) || this;
         _this.retries = 0;
-        _this.abortHandler = function () {
-            _this.source.pause();
-            _this.emit("error", ABORT_ERROR);
-        };
-        _this.aborter = options.abortSignal || abortController.AbortSignal.none;
-        _this.getter = getter;
-        _this.source = source;
-        _this.start = offset;
-        _this.offset = offset;
-        _this.end = offset + count - 1;
-        _this.maxRetryRequests =
-            options.maxRetryRequests && options.maxRetryRequests >= 0 ? options.maxRetryRequests : 0;
-        _this.onProgress = options.onProgress;
-        _this.options = options;
-        _this.aborter.addEventListener("abort", _this.abortHandler);
-        _this.setSourceDataHandler();
-        _this.setSourceEndHandler();
-        _this.setSourceErrorHandler();
-        return _this;
-    }
-    RetriableReadableStream.prototype._read = function () {
-        if (!this.aborter.aborted) {
-            this.source.resume();
-        }
-    };
-    RetriableReadableStream.prototype.setSourceDataHandler = function () {
-        var _this = this;
-        this.source.on("data", function (data) {
+        _this.sourceDataHandler = function (data) {
             if (_this.options.doInjectErrorOnce) {
                 _this.options.doInjectErrorOnce = undefined;
                 _this.source.pause();
@@ -22898,18 +22930,19 @@ var RetriableReadableStream = /** @class */ (function (_super) {
             if (!_this.push(data)) {
                 _this.source.pause();
             }
-        });
-    };
-    RetriableReadableStream.prototype.setSourceEndHandler = function () {
-        var _this = this;
-        this.source.on("end", function () {
+        };
+        _this.sourceErrorOrEndHandler = function (err) {
+            if (err && err.name === "AbortError") {
+                _this.destroy(err);
+                return;
+            }
             // console.log(
-            //   `Source stream emits end, offset: ${
+            //   `Source stream emits end or error, offset: ${
             //     this.offset
             //   }, dest end : ${this.end}`
             // );
+            _this.removeSourceEventHandlers();
             if (_this.offset - 1 === _this.end) {
-                _this.aborter.removeEventListener("abort", _this.abortHandler);
                 _this.push(null);
             }
             else if (_this.offset <= _this.end) {
@@ -22921,31 +22954,53 @@ var RetriableReadableStream = /** @class */ (function (_super) {
                     _this.getter(_this.offset)
                         .then(function (newSource) {
                         _this.source = newSource;
-                        _this.setSourceDataHandler();
-                        _this.setSourceEndHandler();
-                        _this.setSourceErrorHandler();
+                        _this.setSourceEventHandlers();
                     })
                         .catch(function (error) {
-                        _this.emit("error", error);
+                        _this.destroy(error);
                     });
                 }
                 else {
-                    _this.emit("error", new Error(
+                    _this.destroy(new Error(
                     // tslint:disable-next-line:max-line-length
                     "Data corruption failure: received less data than required and reached maxRetires limitation. Received data offset: " + (_this
                         .offset - 1) + ", data needed offset: " + _this.end + ", retries: " + _this.retries + ", max retries: " + _this.maxRetryRequests));
                 }
             }
             else {
-                _this.emit("error", new Error("Data corruption failure: Received more data than original request, data needed offset is " + _this.end + ", received offset: " + (_this.offset - 1)));
+                _this.destroy(new Error("Data corruption failure: Received more data than original request, data needed offset is " + _this.end + ", received offset: " + (_this.offset - 1)));
             }
-        });
+        };
+        _this.getter = getter;
+        _this.source = source;
+        _this.start = offset;
+        _this.offset = offset;
+        _this.end = offset + count - 1;
+        _this.maxRetryRequests =
+            options.maxRetryRequests && options.maxRetryRequests >= 0 ? options.maxRetryRequests : 0;
+        _this.onProgress = options.onProgress;
+        _this.options = options;
+        _this.setSourceEventHandlers();
+        return _this;
+    }
+    RetriableReadableStream.prototype._read = function () {
+        this.source.resume();
     };
-    RetriableReadableStream.prototype.setSourceErrorHandler = function () {
-        var _this = this;
-        this.source.on("error", function (error) {
-            _this.emit("error", error);
-        });
+    RetriableReadableStream.prototype.setSourceEventHandlers = function () {
+        this.source.on("data", this.sourceDataHandler);
+        this.source.on("end", this.sourceErrorOrEndHandler);
+        this.source.on("error", this.sourceErrorOrEndHandler);
+    };
+    RetriableReadableStream.prototype.removeSourceEventHandlers = function () {
+        this.source.removeListener("data", this.sourceDataHandler);
+        this.source.removeListener("end", this.sourceErrorOrEndHandler);
+        this.source.removeListener("error", this.sourceErrorOrEndHandler);
+    };
+    RetriableReadableStream.prototype._destroy = function (error, callback) {
+        // remove listener from source and release source
+        this.removeSourceEventHandlers();
+        this.source.destroy();
+        callback(error === null ? undefined : error);
     };
     return RetriableReadableStream;
 }(stream.Readable));
@@ -24404,7 +24459,7 @@ var AvroReadable = /** @class */ (function () {
 }());
 
 // Copyright (c) Microsoft Corporation.
-var ABORT_ERROR$1 = new abortController.AbortError("Reading from the avro stream was aborted.");
+var ABORT_ERROR = new abortController.AbortError("Reading from the avro stream was aborted.");
 var AvroReadableFromStream = /** @class */ (function (_super) {
     tslib.__extends(AvroReadableFromStream, _super);
     function AvroReadableFromStream(readable) {
@@ -24434,7 +24489,7 @@ var AvroReadableFromStream = /** @class */ (function (_super) {
             var _this = this;
             return tslib.__generator(this, function (_b) {
                 if ((_a = options.abortSignal) === null || _a === void 0 ? void 0 : _a.aborted) {
-                    throw ABORT_ERROR$1;
+                    throw ABORT_ERROR;
                 }
                 if (size < 0) {
                     throw new Error("size parameter should be positive: " + size);
@@ -24478,7 +24533,7 @@ var AvroReadableFromStream = /** @class */ (function (_super) {
                             };
                             var abortHandler = function () {
                                 cleanUp();
-                                reject(ABORT_ERROR$1);
+                                reject(ABORT_ERROR);
                             };
                             _this._readable.on("readable", readableCallback);
                             _this._readable.once("error", rejectCallback);
@@ -25425,7 +25480,7 @@ var StorageSharedKeyCredential = /** @class */ (function (_super) {
  * regenerated.
  */
 var packageName = "azure-storage-blob";
-var packageVersion = "12.4.0";
+var packageVersion = "12.4.1";
 var StorageClientContext = /** @class */ (function (_super) {
     tslib.__extends(StorageClientContext, _super);
     /**
@@ -27998,7 +28053,6 @@ var BlobClient = /** @class */ (function (_super) {
                                     }
                                 });
                             }); }, offset, res_1.contentLength, {
-                                abortSignal: options.abortSignal,
                                 maxRetryRequests: options.maxRetryRequests,
                                 onProgress: options.onProgress
                             })];
@@ -37611,20 +37665,31 @@ const utils = __importStar(__webpack_require__(15));
 const constants_1 = __webpack_require__(931);
 function getTarPath(args, compressionMethod) {
     return __awaiter(this, void 0, void 0, function* () {
-        const IS_WINDOWS = process.platform === 'win32';
-        if (IS_WINDOWS) {
-            const systemTar = `${process.env['windir']}\\System32\\tar.exe`;
-            if (compressionMethod !== constants_1.CompressionMethod.Gzip) {
-                // We only use zstandard compression on windows when gnu tar is installed due to
-                // a bug with compressing large files with bsdtar + zstd
-                args.push('--force-local');
+        switch (process.platform) {
+            case 'win32': {
+                const systemTar = `${process.env['windir']}\\System32\\tar.exe`;
+                if (compressionMethod !== constants_1.CompressionMethod.Gzip) {
+                    // We only use zstandard compression on windows when gnu tar is installed due to
+                    // a bug with compressing large files with bsdtar + zstd
+                    args.push('--force-local');
+                }
+                else if (fs_1.existsSync(systemTar)) {
+                    return systemTar;
+                }
+                else if (yield utils.isGnuTarInstalled()) {
+                    args.push('--force-local');
+                }
+                break;
             }
-            else if (fs_1.existsSync(systemTar)) {
-                return systemTar;
+            case 'darwin': {
+                const gnuTar = yield io.which('gtar', false);
+                if (gnuTar) {
+                    return gnuTar;
+                }
+                break;
             }
-            else if (yield utils.isGnuTarInstalled()) {
-                args.push('--force-local');
-            }
+            default:
+                break;
         }
         return yield io.which('tar', true);
     });
@@ -37709,6 +37774,32 @@ function createTar(archiveFolder, sourceDirectories, compressionMethod) {
     });
 }
 exports.createTar = createTar;
+function listTar(archivePath, compressionMethod) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // --d: Decompress.
+        // --long=#: Enables long distance matching with # bits.
+        // Maximum is 30 (1GB) on 32-bit OS and 31 (2GB) on 64-bit.
+        // Using 30 here because we also support 32-bit self-hosted runners.
+        function getCompressionProgram() {
+            switch (compressionMethod) {
+                case constants_1.CompressionMethod.Zstd:
+                    return ['--use-compress-program', 'zstd -d --long=30'];
+                case constants_1.CompressionMethod.ZstdWithoutLong:
+                    return ['--use-compress-program', 'zstd -d'];
+                default:
+                    return ['-z'];
+            }
+        }
+        const args = [
+            ...getCompressionProgram(),
+            '-tf',
+            archivePath.replace(new RegExp(`\\${path.sep}`, 'g'), '/'),
+            '-P'
+        ];
+        yield execTar(args, compressionMethod);
+    });
+}
+exports.listTar = listTar;
 //# sourceMappingURL=tar.js.map
 
 /***/ }),
@@ -46586,9 +46677,13 @@ function restoreCache(paths, primaryKey, restoreKeys, options) {
         try {
             // Download the cache from the cache entry
             yield cacheHttpClient.downloadCache(cacheEntry.archiveLocation, archivePath, options);
+            if (core.isDebug()) {
+                yield tar_1.listTar(archivePath, compressionMethod);
+            }
             const archiveFileSize = utils.getArchiveFileSizeIsBytes(archivePath);
             core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
             yield tar_1.extractTar(archivePath, compressionMethod);
+            core.info('Cache restored successfully');
         }
         finally {
             // Try to delete the archive to save space
@@ -46631,6 +46726,9 @@ function saveCache(paths, key, options) {
         const archivePath = path.join(archiveFolder, utils.getCacheFileName(compressionMethod));
         core.debug(`Archive Path: ${archivePath}`);
         yield tar_1.createTar(archiveFolder, cachePaths, compressionMethod);
+        if (core.isDebug()) {
+            yield tar_1.listTar(archivePath, compressionMethod);
+        }
         const fileSizeLimit = 5 * 1024 * 1024 * 1024; // 5GB per repo limit
         const archiveFileSize = utils.getArchiveFileSizeIsBytes(archivePath);
         core.debug(`File Size: ${archiveFileSize}`);
@@ -46883,7 +46981,7 @@ function cacheKeyComponents(pyVersion, extras) {
     return [
         'poetry',
         'deps',
-        '3',
+        '4',
         utils_1.hashString(os.platform() + os.arch() + os.release()),
         utils_1.hashString(pyVersion),
         poetryLockCacheKey(),
@@ -46928,7 +47026,8 @@ function restore(pythonVersion, extras) {
         core.info(`restore cache with key ${primaryKey}`);
         core.info(`fallback to ${fbKeys}`);
         core.debug(constants_1.IN_PROJECT_VENV_PATH);
-        return !!(yield cache.restoreCache([constants_1.IN_PROJECT_VENV_PATH], primaryKey, fbKeys));
+        const hitKey = yield cache.restoreCache([constants_1.IN_PROJECT_VENV_PATH], primaryKey, fbKeys);
+        return hitKey === primaryKey;
     });
 }
 exports.restore = restore;
@@ -55453,9 +55552,9 @@ var FormData = _interopDefault(__webpack_require__(790));
 var util = __webpack_require__(669);
 var url = __webpack_require__(835);
 var stream = __webpack_require__(794);
+var logger$1 = __webpack_require__(928);
 var tunnel = __webpack_require__(413);
 var coreAuth = __webpack_require__(229);
-var logger$1 = __webpack_require__(928);
 var xml2js = __webpack_require__(992);
 var os = __webpack_require__(87);
 var coreTracing = __webpack_require__(263);
@@ -55633,7 +55732,7 @@ var Constants = {
     /**
      * The core-http version
      */
-    coreHttpVersion: "1.2.1",
+    coreHttpVersion: "1.2.3",
     /**
      * Specifies HTTP.
      */
@@ -56821,8 +56920,9 @@ function isWebResourceLike(object) {
  * properties to initiate a request.
  */
 var WebResource = /** @class */ (function () {
-    function WebResource(url, method, body, query, headers, streamResponseBody, withCredentials, abortSignal, timeout, onUploadProgress, onDownloadProgress, proxySettings, keepAlive, decompressResponse) {
+    function WebResource(url, method, body, query, headers, streamResponseBody, withCredentials, abortSignal, timeout, onUploadProgress, onDownloadProgress, proxySettings, keepAlive, decompressResponse, streamResponseStatusCodes) {
         this.streamResponseBody = streamResponseBody;
+        this.streamResponseStatusCodes = streamResponseStatusCodes;
         this.url = url || "";
         this.method = method || "GET";
         this.headers = isHttpHeadersLike(headers) ? headers : new HttpHeaders(headers);
@@ -57038,7 +57138,7 @@ var WebResource = /** @class */ (function () {
      * @returns The clone of this WebResource HTTP request object.
      */
     WebResource.prototype.clone = function () {
-        var result = new WebResource(this.url, this.method, this.body, this.query, this.headers && this.headers.clone(), this.streamResponseBody, this.withCredentials, this.abortSignal, this.timeout, this.onUploadProgress, this.onDownloadProgress, this.proxySettings, this.keepAlive, this.decompressResponse);
+        var result = new WebResource(this.url, this.method, this.body, this.query, this.headers && this.headers.clone(), this.streamResponseBody, this.withCredentials, this.abortSignal, this.timeout, this.onUploadProgress, this.onDownloadProgress, this.proxySettings, this.keepAlive, this.decompressResponse, this.streamResponseStatusCodes);
         if (this.formData) {
             result.formData = this.formData;
         }
@@ -57667,6 +57767,7 @@ var defaultAllowedHeaderNames = [
     "x-ms-correlation-request-id",
     "x-ms-request-id",
     "client-request-id",
+    "ms-cv",
     "return-client-request-id",
     "traceparent",
     "Access-Control-Allow-Credentials",
@@ -57813,6 +57914,9 @@ var RestError = /** @class */ (function (_super) {
 }(Error));
 
 // Copyright (c) Microsoft Corporation.
+var logger = logger$1.createClientLogger("core-http");
+
+// Copyright (c) Microsoft Corporation.
 var ReportTransform = /** @class */ (function (_super) {
     tslib.__extends(ReportTransform, _super);
     function ReportTransform(progressCallback) {
@@ -57833,11 +57937,12 @@ var FetchHttpClient = /** @class */ (function () {
     function FetchHttpClient() {
     }
     FetchHttpClient.prototype.sendRequest = function (httpRequest) {
+        var _a;
         return tslib.__awaiter(this, void 0, void 0, function () {
-            var abortController$1, abortListener, formData, requestForm_1, appendFormValue, _i, _a, formKey, formValue, j, contentType, body, onUploadProgress, uploadReportStream, platformSpecificRequestInit, requestInit, response, headers, operationResponse, _b, onDownloadProgress, responseBody, downloadReportStream, length_1, error_1, fetchError;
-            var _c;
-            return tslib.__generator(this, function (_d) {
-                switch (_d.label) {
+            var abortController$1, abortListener, formData, requestForm_1, appendFormValue, _i, _b, formKey, formValue, j, contentType, body, onUploadProgress, uploadReportStream, platformSpecificRequestInit, requestInit, operationResponse, response, headers, streaming, _c, onDownloadProgress, responseBody, downloadReportStream, length_1, error_1, fetchError, uploadStreamDone, downloadStreamDone;
+            var _d;
+            return tslib.__generator(this, function (_e) {
+                switch (_e.label) {
                     case 0:
                         if (!httpRequest && typeof httpRequest !== "object") {
                             throw new Error("'httpRequest' (WebResourceLike) cannot be null or undefined and must be of type object.");
@@ -57876,8 +57981,8 @@ var FetchHttpClient = /** @class */ (function () {
                                     requestForm_1.append(key, value);
                                 }
                             };
-                            for (_i = 0, _a = Object.keys(formData); _i < _a.length; _i++) {
-                                formKey = _a[_i];
+                            for (_i = 0, _b = Object.keys(formData); _i < _b.length; _i++) {
+                                formKey = _b[_i];
                                 formValue = formData[formKey];
                                 if (Array.isArray(formValue)) {
                                     for (j = 0; j < formValue.length; j++) {
@@ -57919,34 +58024,36 @@ var FetchHttpClient = /** @class */ (function () {
                         }
                         return [4 /*yield*/, this.prepareRequest(httpRequest)];
                     case 1:
-                        platformSpecificRequestInit = _d.sent();
+                        platformSpecificRequestInit = _e.sent();
                         requestInit = tslib.__assign({ body: body, headers: httpRequest.headers.rawHeaders(), method: httpRequest.method, signal: abortController$1.signal, redirect: "manual" }, platformSpecificRequestInit);
-                        _d.label = 2;
+                        _e.label = 2;
                     case 2:
-                        _d.trys.push([2, 8, 9, 10]);
+                        _e.trys.push([2, 8, 9, 10]);
                         return [4 /*yield*/, this.fetch(httpRequest.url, requestInit)];
                     case 3:
-                        response = _d.sent();
+                        response = _e.sent();
                         headers = parseHeaders(response.headers);
-                        _c = {
+                        streaming = ((_a = httpRequest.streamResponseStatusCodes) === null || _a === void 0 ? void 0 : _a.has(response.status)) ||
+                            httpRequest.streamResponseBody;
+                        _d = {
                             headers: headers,
                             request: httpRequest,
                             status: response.status,
-                            readableStreamBody: httpRequest.streamResponseBody
+                            readableStreamBody: streaming
                                 ? response.body
                                 : undefined
                         };
-                        if (!!httpRequest.streamResponseBody) return [3 /*break*/, 5];
+                        if (!!streaming) return [3 /*break*/, 5];
                         return [4 /*yield*/, response.text()];
                     case 4:
-                        _b = _d.sent();
+                        _c = _e.sent();
                         return [3 /*break*/, 6];
                     case 5:
-                        _b = undefined;
-                        _d.label = 6;
+                        _c = undefined;
+                        _e.label = 6;
                     case 6:
-                        operationResponse = (_c.bodyAsText = _b,
-                            _c);
+                        operationResponse = (_d.bodyAsText = _c,
+                            _d);
                         onDownloadProgress = httpRequest.onDownloadProgress;
                         if (onDownloadProgress) {
                             responseBody = response.body || undefined;
@@ -57965,10 +58072,10 @@ var FetchHttpClient = /** @class */ (function () {
                         }
                         return [4 /*yield*/, this.processRequest(operationResponse)];
                     case 7:
-                        _d.sent();
+                        _e.sent();
                         return [2 /*return*/, operationResponse];
                     case 8:
-                        error_1 = _d.sent();
+                        error_1 = _e.sent();
                         fetchError = error_1;
                         if (fetchError.code === "ENOTFOUND") {
                             throw new RestError(fetchError.message, RestError.REQUEST_SEND_ERROR, undefined, httpRequest);
@@ -57980,7 +58087,23 @@ var FetchHttpClient = /** @class */ (function () {
                     case 9:
                         // clean up event listener
                         if (httpRequest.abortSignal && abortListener) {
-                            httpRequest.abortSignal.removeEventListener("abort", abortListener);
+                            uploadStreamDone = Promise.resolve();
+                            if (isReadableStream(body)) {
+                                uploadStreamDone = isStreamComplete(body);
+                            }
+                            downloadStreamDone = Promise.resolve();
+                            if (isReadableStream(operationResponse === null || operationResponse === void 0 ? void 0 : operationResponse.readableStreamBody)) {
+                                downloadStreamDone = isStreamComplete(operationResponse.readableStreamBody);
+                            }
+                            Promise.all([uploadStreamDone, downloadStreamDone])
+                                .then(function () {
+                                var _a;
+                                (_a = httpRequest.abortSignal) === null || _a === void 0 ? void 0 : _a.removeEventListener("abort", abortListener);
+                                return;
+                            })
+                                .catch(function (e) {
+                                logger.warning("Error when cleaning up abortListener on httpRequest", e);
+                            });
                         }
                         return [7 /*endfinally*/];
                     case 10: return [2 /*return*/];
@@ -57992,6 +58115,13 @@ var FetchHttpClient = /** @class */ (function () {
 }());
 function isReadableStream(body) {
     return body && typeof body.pipe === "function";
+}
+function isStreamComplete(stream) {
+    return new Promise(function (resolve) {
+        stream.on("close", resolve);
+        stream.on("end", resolve);
+        stream.on("error", resolve);
+    });
 }
 function parseHeaders(headers) {
     var httpHeaders = new HttpHeaders();
@@ -58270,9 +58400,6 @@ var RequestPolicyOptions = /** @class */ (function () {
 }());
 
 // Copyright (c) Microsoft Corporation.
-var logger = logger$1.createClientLogger("core-http");
-
-// Copyright (c) Microsoft Corporation.
 function logPolicy(loggingOptions) {
     if (loggingOptions === void 0) { loggingOptions = {}; }
     return {
@@ -58377,14 +58504,17 @@ function getPathStringFromParameterPath(parameterPath, mapper) {
 }
 
 // Copyright (c) Microsoft Corporation.
-function isStreamOperation(operationSpec) {
-    var result = false;
+/**
+ * Gets the list of status codes for streaming responses.
+ * @internal @hidden
+ */
+function getStreamResponseStatusCodes(operationSpec) {
+    var result = new Set();
     for (var statusCode in operationSpec.responses) {
         var operationResponse = operationSpec.responses[statusCode];
         if (operationResponse.bodyMapper &&
             operationResponse.bodyMapper.type.name === MapperType.Stream) {
-            result = true;
-            break;
+            result.add(Number(statusCode));
         }
     }
     return result;
@@ -58625,6 +58755,7 @@ function isOperationSpecEmpty(operationSpec) {
         (expectedStatusCodes.length === 1 && expectedStatusCodes[0] === "default"));
 }
 function handleErrorResponse(parsedResponse, operationSpec, responseSpec) {
+    var _a;
     var isSuccessByStatus = 200 <= parsedResponse.status && parsedResponse.status < 300;
     var isExpectedStatusCode = isOperationSpecEmpty(operationSpec)
         ? isSuccessByStatus
@@ -58640,7 +58771,9 @@ function handleErrorResponse(parsedResponse, operationSpec, responseSpec) {
         }
     }
     var errorResponseSpec = responseSpec !== null && responseSpec !== void 0 ? responseSpec : operationSpec.responses.default;
-    var initialErrorMessage = isStreamOperation(operationSpec)
+    var streaming = ((_a = parsedResponse.request.streamResponseStatusCodes) === null || _a === void 0 ? void 0 : _a.has(parsedResponse.status)) ||
+        parsedResponse.request.streamResponseBody;
+    var initialErrorMessage = streaming
         ? "Unexpected status code: " + parsedResponse.status
         : parsedResponse.bodyAsText;
     var error = new RestError(initialErrorMessage, undefined, parsedResponse.status, parsedResponse.request, parsedResponse);
@@ -58685,13 +58818,16 @@ function handleErrorResponse(parsedResponse, operationSpec, responseSpec) {
     return { error: error, shouldReturnResponse: false };
 }
 function parse(jsonContentTypes, xmlContentTypes, operationResponse, opts) {
+    var _a;
     var errorHandler = function (err) {
         var msg = "Error \"" + err + "\" occurred while parsing the response body - " + operationResponse.bodyAsText + ".";
         var errCode = err.code || RestError.PARSE_ERROR;
         var e = new RestError(msg, errCode, operationResponse.status, operationResponse.request, operationResponse);
         return Promise.reject(e);
     };
-    if (!operationResponse.request.streamResponseBody && operationResponse.bodyAsText) {
+    var streaming = ((_a = operationResponse.request.streamResponseStatusCodes) === null || _a === void 0 ? void 0 : _a.has(operationResponse.status)) ||
+        operationResponse.request.streamResponseBody;
+    if (!streaming && operationResponse.bodyAsText) {
         var text_1 = operationResponse.bodyAsText;
         var contentType = operationResponse.headers.get("Content-Type") || "";
         var contentComponents = !contentType
@@ -59488,8 +59624,10 @@ function retry$1(policy, request, operationResponse, err, retryData) {
 })(exports.QueryCollectionFormat || (exports.QueryCollectionFormat = {}));
 
 // Copyright (c) Microsoft Corporation.
-var noProxyList = [];
-var isNoProxyInitalized = false;
+/**
+ * @internal
+ */
+var noProxyList = loadNoProxy();
 var byPassedList = new Map();
 function loadEnvironmentProxyValue() {
     if (!process) {
@@ -59500,45 +59638,53 @@ function loadEnvironmentProxyValue() {
     var httpProxy = getEnvironmentValue(Constants.HTTP_PROXY);
     return httpsProxy || allProxy || httpProxy;
 }
-// Check whether the given `uri` matches the noProxyList. If it matches, any request sent to that same `uri` won't set the proxy settings.
+// Check whether the host of a given `uri` is in the noProxyList.
+// If there's a match, any request sent to the same host won't have the proxy settings set.
+// This implementation is a port of https://github.com/Azure/azure-sdk-for-net/blob/8cca811371159e527159c7eb65602477898683e2/sdk/core/Azure.Core/src/Pipeline/Internal/HttpEnvironmentProxy.cs#L210
 function isBypassed(uri) {
-    if (byPassedList.has(uri)) {
-        return byPassedList.get(uri);
+    if (noProxyList.length === 0) {
+        return false;
     }
-    loadNoProxy();
-    var isBypassedFlag = false;
     var host = URLBuilder.parse(uri).getHost();
+    if (byPassedList.has(host)) {
+        return byPassedList.get(host);
+    }
+    var isBypassedFlag = false;
     for (var _i = 0, noProxyList_1 = noProxyList; _i < noProxyList_1.length; _i++) {
-        var proxyString = noProxyList_1[_i];
-        if (proxyString[0] === ".") {
-            if (uri.endsWith(proxyString)) {
+        var pattern = noProxyList_1[_i];
+        if (pattern[0] === ".") {
+            // This should match either domain it self or any subdomain or host
+            // .foo.com will match foo.com it self or *.foo.com
+            if (host.endsWith(pattern)) {
                 isBypassedFlag = true;
             }
             else {
-                if (host === proxyString.slice(1) && host.length === proxyString.length - 1) {
+                if (host.length === pattern.length - 1 && host === pattern.slice(1)) {
                     isBypassedFlag = true;
                 }
             }
         }
         else {
-            if (host === proxyString) {
+            if (host === pattern) {
                 isBypassedFlag = true;
             }
         }
     }
-    byPassedList.set(uri, isBypassedFlag);
+    byPassedList.set(host, isBypassedFlag);
     return isBypassedFlag;
 }
+/**
+ * @internal
+ */
 function loadNoProxy() {
-    if (isNoProxyInitalized) {
-        return;
-    }
     var noProxy = getEnvironmentValue(Constants.NO_PROXY);
     if (noProxy) {
-        var list = noProxy.split(",");
-        noProxyList = list.map(function (item) { return item.trim(); }).filter(function (item) { return item.length; });
+        return noProxy
+            .split(",")
+            .map(function (item) { return item.trim(); })
+            .filter(function (item) { return item.length; });
     }
-    isNoProxyInitalized = true;
+    return [];
 }
 function getDefaultProxySettings(proxyUrl) {
     if (!proxyUrl) {
@@ -60116,7 +60262,7 @@ var ServiceClient = /** @class */ (function () {
                         }
                         httpRequest.url = requestUrl.toString();
                         contentType = operationSpec.contentType || this.requestContentType;
-                        if (contentType) {
+                        if (contentType && operationSpec.requestBody) {
                             httpRequest.headers.set("Content-Type", contentType);
                         }
                         if (operationSpec.headerParameters) {
@@ -60168,8 +60314,8 @@ var ServiceClient = /** @class */ (function () {
                         }
                         httpRequest.withCredentials = this._withCredentials;
                         serializeRequestBody(this, httpRequest, operationArguments, operationSpec);
-                        if (httpRequest.streamResponseBody === undefined || httpRequest.streamResponseBody === null) {
-                            httpRequest.streamResponseBody = isStreamOperation(operationSpec);
+                        if (httpRequest.streamResponseStatusCodes === undefined) {
+                            httpRequest.streamResponseStatusCodes = getStreamResponseStatusCodes(operationSpec);
                         }
                         rawResponse = void 0;
                         sendRequestError = void 0;
