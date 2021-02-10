@@ -4012,6 +4012,8 @@ const core = __importStar(__webpack_require__(470));
 const utils_1 = __webpack_require__(163);
 const cache_1 = __webpack_require__(722);
 const poetry = __importStar(__webpack_require__(166));
+const fs_1 = __webpack_require__(747);
+const exec_1 = __webpack_require__(986);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const extras = core
@@ -4025,14 +4027,13 @@ function run() {
             .filter(x => x !== '');
         const pythonVersion = yield utils_1.getPythonVersion();
         core.info(`python version: ${pythonVersion}`);
-        if (!utils_1.isWindows()) { // skip cache on windows, there is a bug when caching executable.
-            yield cache_1.restore(pythonVersion, extras);
-        }
+        yield cache_1.restore(pythonVersion, extras);
         yield poetry.config('virtualenvs.in-project', 'true');
-        yield poetry.install(extras, additionalArgs);
-        if (!utils_1.isWindows()) {
-            yield cache_1.setup(pythonVersion, extras);
+        if (utils_1.isWindows() && !fs_1.existsSync('.venv')) {
+            yield exec_1.exec('python -m venv .venv');
         }
+        yield poetry.install(extras, additionalArgs);
+        yield cache_1.setup(pythonVersion, extras);
         utils_1.enableVenv();
     });
 }
@@ -46981,7 +46982,7 @@ function cacheKeyComponents(pyVersion, extras) {
     return [
         'poetry',
         'deps',
-        '4',
+        '5',
         utils_1.hashString(os.platform() + os.arch() + os.release()),
         utils_1.hashString(pyVersion),
         poetryLockCacheKey(),
