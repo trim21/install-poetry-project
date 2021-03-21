@@ -1,10 +1,12 @@
-import * as cache from '@actions/cache'
 import * as fs from 'fs'
 import * as os from 'os'
+
+import * as cache from '@actions/cache'
 import * as core from '@actions/core'
-import { IN_PROJECT_VENV_PATH } from './constants'
-import { hashString } from './utils'
 import { ReserveCacheError } from '@actions/cache'
+
+import { hashString } from './utils'
+import { IN_PROJECT_VENV_PATH } from './constants'
 
 function cacheKeyComponents (pyVersion: string, extras: string[]): string[] {
   return [

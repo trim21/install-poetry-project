@@ -31,7 +31,7 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
   })
 }
 
-async function getVersion (): Promise<string> {
+export async function getVersion (): Promise<string> {
   let myOutput = ''
   const options = {
     silent: true,

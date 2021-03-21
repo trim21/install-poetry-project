@@ -1,10 +1,11 @@
+import { existsSync } from 'fs'
+
 import * as core from '@actions/core'
+import { exec } from '@actions/exec'
 
 import { enableVenv, getPythonVersion, isWindows } from './utils'
 import { restore, setup } from './cache'
 import * as poetry from './poetry'
-import { existsSync } from 'fs'
-import { exec } from '@actions/exec'
 
 async function run (): Promise<void> {
   const extras = core

@@ -1,8 +1,10 @@
-import { exec } from '@actions/exec'
 import crypto from 'crypto'
-import { IN_PROJECT_VENV_PATH } from './constants'
-import * as core from '@actions/core'
 import path from 'path'
+
+import { exec } from '@actions/exec'
+import * as core from '@actions/core'
+
+import { IN_PROJECT_VENV_PATH } from './constants'
 
 export async function getPythonVersion (): Promise<string> {
   let myOutput = ''
