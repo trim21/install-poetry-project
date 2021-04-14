@@ -100,5 +100,6 @@ lib/
 coverage/
 
 .idea
+.venv
 
 dist/index.js
