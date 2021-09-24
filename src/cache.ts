@@ -46,7 +46,7 @@ export async function setup (
       key
     )
   } catch (e) {
-    if (e.name === ReserveCacheError.name) {
+    if (e instanceof ReserveCacheError) {
       if (e.toString().includes('another job may be creating this cache')) {
         return
       }
