@@ -1,12 +1,12 @@
 {
   "name": "typescript-action",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "private": true,
   "description": "TypeScript template action",
   "main": "dist/index.js",
   "scripts": {
     "format": "eslint src/** __tests__/** *.js *.cjs --fix",
-    "lint": "eslint src/** __tests__/** *.js *.cjs" ,
+    "lint": "eslint src/** __tests__/** *.js *.cjs",
     "build": "webpack --config webpack.config.cjs",
     "test": "jest",
     "all": "npm run lint && npm run build",
