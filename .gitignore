@@ -101,5 +101,6 @@ coverage/
 
 .idea
 .venv
+.vscode
 
 dist/index.js

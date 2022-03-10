@@ -11,7 +11,7 @@ jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: "12"
+      NODE_VERSION: "16"
 
     steps:
       - uses: actions/checkout@v1
@@ -46,8 +46,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        python_version: [ "3.7", "3.10" ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python_version: ["3.7", "3.10"]
 
     steps:
       - uses: actions/checkout@v2
@@ -76,8 +76,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        python_version: [ "3.7", "3.10" ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python_version: ["3.7", "3.10"]
 
     steps:
       - uses: actions/checkout@v2
