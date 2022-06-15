@@ -14,7 +14,7 @@
     "postversion": "git push"
   },
   "engines": {
-    "node": "16.15.1"
+    "node": "^16.15.0"
   },
   "repository": {
     "type": "git",
