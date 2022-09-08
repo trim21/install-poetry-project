@@ -20,9 +20,11 @@ async function run (): Promise<void> {
     .filter(x => x !== '')
 
   const pythonVersion = await getPythonVersion()
+  const poetryVersion = await poetry.getVersion()
   core.info(`python version: ${pythonVersion}`)
+  core.info(`poetry version: ${poetryVersion}`)
 
-  await restore(pythonVersion, extras)
+  await restore(pythonVersion, poetryVersion, extras)
 
   await poetry.config('virtualenvs.in-project', 'true')
   if (isWindows() && !existsSync('.venv')) {
@@ -30,7 +32,7 @@ async function run (): Promise<void> {
   }
   await poetry.install(extras, additionalArgs)
 
-  await setup(pythonVersion, extras)
+  await setup(pythonVersion, poetryVersion, extras)
   enableVenv()
 }
 
