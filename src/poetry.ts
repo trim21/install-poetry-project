@@ -3,11 +3,14 @@ import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
   const args = ['config', key, value]
-  await exec('poetry', args, {
+  const option = {
     env: {
       PATH: process.env.PATH || '',
     }
-  })
+  }
+  await exec('echo', ['hello'], option)
+  await exec('poetry', ['config', '--list'], option)
+  await exec('poetry', args, option)
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
