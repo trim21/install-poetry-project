@@ -63,6 +63,8 @@ export async function restore (
   poetryVersion: string,
   extras: string[]
 ): Promise<Boolean> {
+  return false
+  // eslint-disable-next-line no-unreachable
   const primaryKey = cacheKeyComponents(pythonVersion, poetryVersion, extras).join('-')
   const fbKeys: string[] = fallbackKeys(pythonVersion, poetryVersion, extras)
   core.info(`restore cache with key ${primaryKey}`)
