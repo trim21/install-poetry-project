@@ -8,7 +8,7 @@
     "format": "eslint src/** __tests__/** *.js *.cjs --fix",
     "lint": "eslint src/** __tests__/** *.js *.cjs",
     "build": "webpack --config webpack.config.cjs",
-    "test": "jest --verbose",
+    "test": "jest --coverage=false --verbose",
     "all": "npm run lint && npm run build",
     "postinstall": "husky install",
     "postversion": "git push"
