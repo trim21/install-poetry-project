@@ -8,21 +8,22 @@ import { ReserveCacheError } from '@actions/cache'
 import { hashString } from './utils'
 import { IN_PROJECT_VENV_PATH } from './constants'
 
-function cacheKeyComponents (pyVersion: string, extras: string[]): string[] {
+function cacheKeyComponents (pyVersion: string, poetryVersion: string, extras: string[]): string[] {
   return [
     'poetry',
     'deps',
     '5',
     hashString(os.platform() + os.arch() + os.release()),
     hashString(pyVersion),
+    hashString(poetryVersion),
     poetryLockCacheKey(),
     hashString(extras.join('_')),
   ]
 }
 
-function fallbackKeys (pyVersion: string, extras: string[]): string[] {
+function fallbackKeys (pyVersion: string, poetryVersion: string, extras: string[]): string[] {
   const keys = []
-  const components = cacheKeyComponents(pyVersion, extras)
+  const components = cacheKeyComponents(pyVersion, poetryVersion, extras)
   for (let index = 5; index < components.length; index++) {
     keys.unshift(components.slice(0, index).join('-'))
   }
@@ -35,10 +36,11 @@ function poetryLockCacheKey () {
 
 export async function setup (
   pythonVersion: string,
+  poetryVersion: string,
   extras: string[]
 ): Promise<void> {
   try {
-    const key = cacheKeyComponents(pythonVersion, extras).join('-')
+    const key = cacheKeyComponents(pythonVersion, poetryVersion, extras).join('-')
     core.info(`cache with key ${key}`)
     core.debug(IN_PROJECT_VENV_PATH)
     await cache.saveCache(
@@ -58,10 +60,11 @@ export async function setup (
 
 export async function restore (
   pythonVersion: string,
+  poetryVersion: string,
   extras: string[]
 ): Promise<Boolean> {
-  const primaryKey = cacheKeyComponents(pythonVersion, extras).join('-')
-  const fbKeys: string[] = fallbackKeys(pythonVersion, extras)
+  const primaryKey = cacheKeyComponents(pythonVersion, poetryVersion, extras).join('-')
+  const fbKeys: string[] = fallbackKeys(pythonVersion, poetryVersion, extras)
   core.info(`restore cache with key ${primaryKey}`)
   core.info(`fallback to ${fbKeys}`)
   core.debug(IN_PROJECT_VENV_PATH)
