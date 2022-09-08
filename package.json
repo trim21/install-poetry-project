@@ -8,7 +8,7 @@
     "format": "eslint src/** __tests__/** *.js *.cjs --fix",
     "lint": "eslint src/** __tests__/** *.js *.cjs",
     "build": "webpack --config webpack.config.cjs",
-    "test": "jest",
+    "test": "jest --verbose",
     "all": "npm run lint && npm run build",
     "postinstall": "husky install",
     "postversion": "git push"
@@ -44,6 +44,7 @@
     "eslint-config-standard": "17.0.0",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-jest": "26.8.2",
+    "eslint-plugin-n": "^15.2.5",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "6.0.0",
     "eslint-plugin-standard": "5.0.0",
