@@ -5,7 +5,10 @@ export async function config (key: string, value: string): Promise<void> {
   const args = ['-vvv', 'config', key, value]
   const env: Record<string, string> = {}
   Object.keys(process.env).forEach((key: string) => {
-    env[key] = process.env.toString()
+    const v = process.env[key]
+    if (v) {
+      env[key] = v.toString()
+    }
   })
 
   const option = { env }
