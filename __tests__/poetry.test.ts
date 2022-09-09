@@ -20,7 +20,7 @@ beforeEach(() => {
 
 test('get poetry version', async () => {
   const poetryVersion = await poetry.getVersion()
-  expect(poetryVersion).toMatch(/\d+\.\d+\.\d+/)
+  expect(poetryVersion).toMatch(/^\d+\.\d+\.\d+$/)
 })
 
 test('get install without --remove-untracked args', async () => {

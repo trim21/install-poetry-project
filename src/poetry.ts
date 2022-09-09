@@ -38,17 +38,22 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
   })
 }
 
+const pattern = /Poetry \(version (.*)\)/
+
 export async function getVersion (): Promise<string> {
-  let myOutput = ''
+  let output = ''
   const options = {
     silent: true,
     listeners: {
       stdout: (data: Buffer) => {
-        myOutput += data.toString()
+        output += data.toString()
       }
     }
   }
 
   await exec('poetry', ['--version'], options)
-  return myOutput.replace('Poetry version ', '')
+  if (pattern.test(output)) {
+    return pattern.exec(output)![1]
+  }
+  return output.replace('Poetry version ', '')
 }
