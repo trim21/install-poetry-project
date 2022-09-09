@@ -1,3 +1,5 @@
+import * as fs from 'fs/promises'
+
 import * as semver from 'semver'
 import { exec } from '@actions/exec'
 import * as core from '@actions/core'
@@ -34,6 +36,10 @@ export async function config (key: string, value: string): Promise<void> {
 
   core.error(myStdout)
   core.error(myStderr)
+
+  await fs.mkdir('/home/runner/debug')
+  await fs.writeFile('/home/runner/debug/stdout', myStdout)
+  await fs.writeFile('/home/runner/debug/stderr', myStderr)
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {

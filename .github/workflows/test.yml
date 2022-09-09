@@ -55,6 +55,12 @@ jobs:
 
       - uses: ./
 
+      - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: dist
+          path: ~/debug/
+
       - run: python tests/group1.py
 
 
