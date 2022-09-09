@@ -53,6 +53,8 @@ jobs:
       - uses: actions/setup-python@v3
       - uses: Trim21/setup-poetry@dist/v1
 
+      - run: poetry config  'virtualenvs.in-project' 'true'
+
       - uses: ./
 
       - uses: actions/upload-artifact@v2
