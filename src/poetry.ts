@@ -5,6 +5,7 @@ import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
   const env: Record<string, string> = {
+    PYTHONVERBOSE: '1',
     PYTHONDEVMODE: '1',
   }
   Object.keys(process.env).forEach((key: string) => {
