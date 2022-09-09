@@ -57,6 +57,7 @@ jobs:
 
       - run: ls -ahl
       - run: ls -ahl .venv
+      - run: ls -ahl .venv/bin
 
       - run: python tests/group1.py
 
