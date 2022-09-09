@@ -20,7 +20,7 @@ beforeEach(() => {
 
 test('get poetry version', async () => {
   const poetryVersion = await poetry.getVersion()
-  expect(poetryVersion).toMatch(/\d+\.\d+\.\d+/)
+  expect(poetryVersion).toMatch(/^\d+\.\d+\.\d+$/)
 })
 
 test('get install without --remove-untracked args', async () => {
@@ -34,10 +34,10 @@ test('get install with --remove-untracked args', async () => {
   expect(mockFn).toBeCalledWith('poetry', ['install', '-E', 'e1', '--another', '--remove-untracked'])
 })
 
-test('config', async () => {
-  await poetry.config('kkk', 'vvv')
-  expect(mockFn).toBeCalledWith('poetry', ['config', 'kkk', 'vvv'])
-})
+// test('config', async () => {
+//   await poetry.config('kkk', 'vvv')
+//   expect(mockFn).toBeCalledWith('poetry', ['config', 'kkk', 'vvv'])
+// })
 
 afterEach(() => {
   jest.clearAllMocks()

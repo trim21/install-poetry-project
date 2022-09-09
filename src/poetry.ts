@@ -3,11 +3,8 @@ import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
   const args = ['config', key, value]
-  await exec('poetry', args, {
-    env: {
-      PATH: process.env.PATH || '',
-    }
-  })
+
+  await exec('poetry', args)
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
@@ -19,8 +16,13 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
     args.push(...additionalArgs)
   }
 
-  if (semver.gte(await getVersion(), '1.1.0')) {
-    args.push('--remove-untracked')
+  const poetryVersion = await getVersion()
+  if (semver.gte(poetryVersion, '1.1.0')) {
+    if (semver.gte(poetryVersion, '1.2.0')) {
+      args.push('--sync')
+    } else {
+      args.push('--remove-untracked')
+    }
   }
 
   await exec('poetry', args, {
@@ -31,17 +33,22 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
   })
 }
 
+const pattern = /Poetry \(version (.*)\)/
+
 export async function getVersion (): Promise<string> {
-  let myOutput = ''
+  let output = ''
   const options = {
     silent: true,
     listeners: {
       stdout: (data: Buffer) => {
-        myOutput += data.toString()
+        output += data.toString()
       }
     }
   }
 
   await exec('poetry', ['--version'], options)
-  return myOutput.replace('Poetry version ', '')
+  if (pattern.test(output)) {
+    return pattern.exec(output)![1]
+  }
+  return output.replace('Poetry version ', '')
 }

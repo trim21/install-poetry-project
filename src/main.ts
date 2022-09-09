@@ -4,7 +4,7 @@ import * as core from '@actions/core'
 import { exec } from '@actions/exec'
 
 import { enableVenv, getPythonVersion, isWindows } from './utils'
-import { restore, setup } from './cache'
+import * as cache from './cache'
 import * as poetry from './poetry'
 
 async function run (): Promise<void> {
@@ -24,7 +24,7 @@ async function run (): Promise<void> {
   core.info(`python version: ${pythonVersion}`)
   core.info(`poetry version: ${poetryVersion}`)
 
-  await restore(pythonVersion, poetryVersion, extras)
+  await cache.restore(pythonVersion, poetryVersion, extras)
 
   await poetry.config('virtualenvs.in-project', 'true')
   if (isWindows() && !existsSync('.venv')) {
@@ -32,11 +32,11 @@ async function run (): Promise<void> {
   }
   await poetry.install(extras, additionalArgs)
 
-  await setup(pythonVersion, poetryVersion, extras)
+  await cache.setup(pythonVersion, poetryVersion, extras)
   enableVenv()
 }
 
 run().catch(e => {
   core.setFailed(e)
-  process.exit(1)
+  throw e
 })
