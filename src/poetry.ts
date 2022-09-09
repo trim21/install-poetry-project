@@ -2,7 +2,6 @@ import * as fs from 'fs/promises'
 
 import * as semver from 'semver'
 import { exec } from '@actions/exec'
-import * as core from '@actions/core'
 
 export async function config (key: string, value: string): Promise<void> {
   const args = ['-vvv', 'config', key, value]
@@ -22,24 +21,27 @@ export async function config (key: string, value: string): Promise<void> {
   let myStdout = ''
   let myStderr = ''
 
-  await exec('poetry', args, {
-    env,
-    listeners: {
-      stderr: (data: Buffer) => {
-        myStderr += data.toString()
-      },
-      stdout: (data: Buffer) => {
-        myStdout += data.toString()
+  try {
+    await exec('poetry', args, {
+      env,
+      listeners: {
+        stderr: (data: Buffer) => {
+          myStderr += data.toString()
+        },
+        stdout: (data: Buffer) => {
+          myStdout += data.toString()
+        }
       }
-    }
-  })
+    })
+  } catch (e) {
 
-  core.error(myStdout)
-  core.error(myStderr)
+  }
 
   await fs.mkdir('/home/runner/debug')
   await fs.writeFile('/home/runner/debug/stdout', myStdout)
   await fs.writeFile('/home/runner/debug/stderr', myStderr)
+
+  throw new Error(myStdout)
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
