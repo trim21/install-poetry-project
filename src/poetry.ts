@@ -4,7 +4,9 @@ import * as semver from 'semver'
 import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
-  const env: Record<string, string> = {}
+  const env: Record<string, string> = {
+    PYTHONDEVMODE: '1',
+  }
   Object.keys(process.env).forEach((key: string) => {
     const v = process.env[key]
     if (v) {
