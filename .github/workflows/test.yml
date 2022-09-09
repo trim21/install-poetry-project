@@ -53,20 +53,9 @@ jobs:
       - uses: actions/setup-python@v3
       - uses: Trim21/setup-poetry@dist/v1
 
-      - run: env
-
-      - run: poetry config virtualenvs.in-project true
-
       - uses: ./
 
-      - uses: actions/upload-artifact@v2
-        if: ${{ failure() }}
-        with:
-          name: dist
-          path: ~/debug/
-
       - run: python tests/group1.py
-
 
   test-run: # make sure the action works on a clean machine without building
     needs: test-default
