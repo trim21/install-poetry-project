@@ -19,22 +19,21 @@ export async function config (key: string, value: string): Promise<void> {
 
   let myStdout = ''
   let myStderr = ''
-  const listeners = {
-    stderr: (data: Buffer) => {
-      myStderr += data.toString()
-    },
-    stdout: (data: Buffer) => {
-      myStdout += data.toString()
-    }
-  }
 
   await exec('poetry', args, {
-    listeners,
     env,
+    listeners: {
+      stderr: (data: Buffer) => {
+        myStderr += data.toString()
+      },
+      stdout: (data: Buffer) => {
+        myStdout += data.toString()
+      }
+    }
   })
 
-  core.debug(myStdout)
-  core.debug(myStderr)
+  core.error(myStdout)
+  core.error(myStderr)
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
