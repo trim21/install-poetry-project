@@ -1,3 +1,5 @@
+import * as fs from 'fs/promises'
+
 import * as semver from 'semver'
 import { exec } from '@actions/exec'
 
@@ -10,6 +12,9 @@ export async function config (key: string, value: string): Promise<void> {
       env[key] = v.toString()
     }
   })
+
+  const f = await fs.readFile('/home/runner/.config/pypoetry/config.toml')
+  console.log(f.toString())
 
   const option = { env }
   await exec('echo', ['hello'], option)
