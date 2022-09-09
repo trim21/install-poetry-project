@@ -1,5 +1,6 @@
 import * as semver from 'semver'
 import { exec } from '@actions/exec'
+import * as core from '@actions/core'
 
 export async function config (key: string, value: string): Promise<void> {
   const args = ['-vvv', 'config', key, value]
@@ -15,7 +16,25 @@ export async function config (key: string, value: string): Promise<void> {
   await exec('echo', ['hello'], option)
   await exec('poetry', ['config', '--list'], option)
   await exec('poetry', [], option)
-  await exec('poetry', args, option)
+
+  let myStdout = ''
+  let myStderr = ''
+  const listeners = {
+    stderr: (data: Buffer) => {
+      myStderr += data.toString()
+    },
+    stdout: (data: Buffer) => {
+      myStdout += data.toString()
+    }
+  }
+
+  await exec('poetry', args, {
+    listeners,
+    env,
+  })
+
+  core.info(myStdout)
+  core.info(myStderr)
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
