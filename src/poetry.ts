@@ -2,19 +2,9 @@ import * as semver from 'semver'
 import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
-  const env: Record<string, string> = {}
-  Object.keys(process.env).forEach((key: string) => {
-    const v = process.env[key]
-    if (v) {
-      env[key] = v.toString()
-    }
-  })
-
   const args = ['-vvv', 'config', key, value]
 
-  await exec('poetry', args, {
-    env,
-  })
+  await exec('poetry', args)
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
