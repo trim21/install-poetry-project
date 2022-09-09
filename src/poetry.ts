@@ -33,8 +33,8 @@ export async function config (key: string, value: string): Promise<void> {
     env,
   })
 
-  core.info(myStdout)
-  core.info(myStderr)
+  core.debug(myStdout)
+  core.debug(myStderr)
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
