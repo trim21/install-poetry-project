@@ -55,6 +55,8 @@ jobs:
 
       - uses: ./
 
+      - run: ls -ahl
+
       - run: python tests/group1.py
 
   test-run: # make sure the action works on a clean machine without building
