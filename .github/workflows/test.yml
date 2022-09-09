@@ -40,14 +40,32 @@ jobs:
           name: dist
           path: ./dist/index.js
 
-  test-run: # make sure the action works on a clean machine without building
+  test-default: # make sure the action works on a clean machine without building
     needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/setup-python@v3
+      - uses: Trim21/setup-poetry@dist/v1
+
+      - uses: ./
+
+      - run: python tests/group1.py
+
+
+  test-run: # make sure the action works on a clean machine without building
+    needs: test-default
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python_version: ["3.7", "3.10"]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        python_version: [ "3.7", "3.10" ]
 
     steps:
       - uses: actions/checkout@v2
@@ -71,13 +89,13 @@ jobs:
       - run: pre-commit --version
 
   test-multi-group: # make sure the action works on a clean machine without building
-    needs: build
+    needs: test-default
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python_version: ["3.7", "3.10"]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        python_version: [ "3.7", "3.10" ]
 
     steps:
       - uses: actions/checkout@v2
@@ -102,7 +120,7 @@ jobs:
       - run: pre-commit --version
 
   test-run-lower-poetry: # make sure the action works on a clean machine without building
-    needs: build
+    needs: test-default
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
