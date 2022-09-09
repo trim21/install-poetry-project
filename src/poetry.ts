@@ -2,7 +2,7 @@ import * as semver from 'semver'
 import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
-  const args = ['-vvv', 'config', key, value]
+  const args = ['config', key, value]
 
   await exec('poetry', args)
 }
