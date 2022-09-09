@@ -11,6 +11,7 @@ export async function config (key: string, value: string): Promise<void> {
   const option = { env }
   await exec('echo', ['hello'], option)
   await exec('poetry', ['config', '--list'], option)
+  await exec('poetry', [], option)
   await exec('poetry', args, option)
 }
 
