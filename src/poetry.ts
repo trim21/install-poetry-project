@@ -4,7 +4,6 @@ import * as semver from 'semver'
 import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
-  const args = ['-vvv', 'config', key, value]
   const env: Record<string, string> = {}
   Object.keys(process.env).forEach((key: string) => {
     const v = process.env[key]
@@ -12,6 +11,8 @@ export async function config (key: string, value: string): Promise<void> {
       env[key] = v.toString()
     }
   })
+
+  console.log(JSON.stringify(env, null, '  '))
 
   const option = { env }
   await exec('echo', ['hello'], option)
@@ -21,6 +22,7 @@ export async function config (key: string, value: string): Promise<void> {
   let myStdout = ''
   let myStderr = ''
 
+  const args = ['-vvv', 'config', key, value]
   try {
     await exec('poetry', args, {
       env,
