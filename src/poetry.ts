@@ -3,11 +3,12 @@ import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
   const args = ['config', key, value]
-  const option = {
-    env: {
-      PATH: process.env.PATH || '',
-    }
-  }
+  const env: Record<string, string> = {}
+  Object.keys(process.env).forEach((key: string) => {
+    env[key] = process.env.toString()
+  })
+
+  const option = { env }
   await exec('echo', ['hello'], option)
   await exec('poetry', ['config', '--list'], option)
   await exec('poetry', args, option)
