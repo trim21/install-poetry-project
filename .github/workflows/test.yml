@@ -54,10 +54,8 @@ jobs:
       - uses: Trim21/setup-poetry@dist/v1
 
       - uses: ./
-
-      - run: ls -ahl
-      - run: ls -ahl .venv
-      - run: ls -ahl .venv/bin
+        with:
+          extras: group1
 
       - run: python3 tests/group1.py
 
