@@ -1,13 +1,8 @@
-import * as fs from 'fs/promises'
-
 import * as semver from 'semver'
 import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
-  const env: Record<string, string> = {
-    PYTHONVERBOSE: '1',
-    PYTHONDEVMODE: '1',
-  }
+  const env: Record<string, string> = {}
   Object.keys(process.env).forEach((key: string) => {
     const v = process.env[key]
     if (v) {
@@ -15,33 +10,11 @@ export async function config (key: string, value: string): Promise<void> {
     }
   })
 
-  console.log(JSON.stringify(env, null, '  '))
-
-  let myStdout = ''
-  let myStderr = ''
-
   const args = ['-vvv', 'config', key, value]
-  try {
-    await exec('poetry', args, {
-      env,
-      listeners: {
-        stderr: (data: Buffer) => {
-          myStderr += data.toString()
-        },
-        stdout: (data: Buffer) => {
-          myStdout += data.toString()
-        }
-      }
-    })
-  } catch (e) {
 
-  }
-
-  await fs.mkdir('/home/runner/debug')
-  await fs.writeFile('/home/runner/debug/stdout', myStdout)
-  await fs.writeFile('/home/runner/debug/stderr', myStderr)
-
-  throw new Error(myStdout)
+  await exec('poetry', args, {
+    env,
+  })
 }
 
 export async function install (extras: string[], additionalArgs: string[]): Promise<void> {
