@@ -2,7 +2,7 @@ import * as semver from 'semver'
 import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
-  const args = ['config', key, value]
+  const args = ['-vvv', 'config', key, value]
   const env: Record<string, string> = {}
   Object.keys(process.env).forEach((key: string) => {
     env[key] = process.env.toString()
