@@ -59,7 +59,7 @@ jobs:
       - run: ls -ahl .venv
       - run: ls -ahl .venv/bin
 
-      - run: python tests/group1.py
+      - run: python3 tests/group1.py
 
   test-run: # make sure the action works on a clean machine without building
     needs: test-default
