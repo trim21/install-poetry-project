@@ -10,5 +10,4 @@ module.exports = {
   collectCoverageFrom: ['./src/**'],
   coverageDirectory: './coverage/',
   collectCoverage: true,
-  verbose: true
 }
