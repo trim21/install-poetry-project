@@ -8,7 +8,7 @@ on: # rebuild any PRs and main branch changes
       - "dist/*"
 
 jobs:
-  build: # make sure build/ci work properly
+  test:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: "16"
@@ -28,11 +28,29 @@ jobs:
           key: yarn-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('yarn.lock') }}
 
       - run: yarn
-        if: steps.restore-cache.outputs.cache-hit != 'true'
-
       - run: yarn test
-      - run: bash <(curl -s https://codecov.io/bash)
+      - uses: codecov/codecov-action@v3
 
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: "16"
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: actions/cache@v2
+        id: restore-cache
+        with:
+          path: ./node_modules
+          key: yarn-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('yarn.lock') }}
+
+      - run: yarn
       - run: yarn build
 
       - uses: actions/upload-artifact@v2
