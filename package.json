@@ -10,8 +10,7 @@
     "build": "webpack --config webpack.config.cjs",
     "test": "jest",
     "all": "npm run lint && npm run build",
-    "postinstall": "husky install",
-    "postversion": "git push"
+    "postinstall": "husky install"
   },
   "engines": {
     "node": "^16.15.0"
