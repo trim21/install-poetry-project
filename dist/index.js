@@ -54108,410 +54108,6 @@ module.exports.PROCESSING_OPTIONS = PROCESSING_OPTIONS;
 
 /***/ }),
 
-/***/ "./src/cache.ts":
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.restore = exports.setup = void 0;
-const fs = __importStar(__webpack_require__("fs"));
-const os = __importStar(__webpack_require__("os"));
-const cache = __importStar(__webpack_require__("./node_modules/@actions/cache/lib/cache.js"));
-const core = __importStar(__webpack_require__("./node_modules/@actions/core/lib/core.js"));
-const cache_1 = __webpack_require__("./node_modules/@actions/cache/lib/cache.js");
-const utils_1 = __webpack_require__("./src/utils.ts");
-const constants_1 = __webpack_require__("./src/constants.ts");
-function cacheKeyComponents(pyVersion, poetryVersion, extras) {
-    const keys = [
-        'poetry',
-        'deps',
-        '6',
-        (0, utils_1.hashString)(os.platform() + os.arch() + os.release()),
-        (0, utils_1.hashString)(pyVersion),
-        poetryLockCacheKey(),
-    ];
-    if (extras.length) {
-        keys.push((0, utils_1.hashString)(extras.join('_')));
-    }
-    return keys;
-}
-function fallbackKeys(pyVersion, poetryVersion, extras) {
-    const keys = [];
-    const components = cacheKeyComponents(pyVersion, poetryVersion, extras);
-    for (let index = 5; index < components.length; index++) {
-        keys.unshift(components.slice(0, index).join('-'));
-    }
-    return keys;
-}
-function poetryLockCacheKey() {
-    return (0, utils_1.hashString)(fs.readFileSync('poetry.lock').toString());
-}
-function setup(pythonVersion, poetryVersion, extras) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const key = cacheKeyComponents(pythonVersion, poetryVersion, extras).join('-');
-            core.info(`cache with key ${key}`);
-            core.debug(constants_1.IN_PROJECT_VENV_PATH);
-            yield cache.saveCache([constants_1.IN_PROJECT_VENV_PATH], key);
-        }
-        catch (e) {
-            if (e instanceof cache_1.ReserveCacheError) {
-                if (e.toString().includes('another job may be creating this cache')) {
-                    return;
-                }
-                throw e;
-            }
-            throw e;
-        }
-    });
-}
-exports.setup = setup;
-function restore(pythonVersion, poetryVersion, extras) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const primaryKey = cacheKeyComponents(pythonVersion, poetryVersion, extras).join('-');
-        const fbKeys = fallbackKeys(pythonVersion, poetryVersion, extras);
-        core.info(`restore cache with key ${primaryKey}`);
-        core.info(`fallback to ${fbKeys}`);
-        core.debug(constants_1.IN_PROJECT_VENV_PATH);
-        const hitKey = yield cache.restoreCache([constants_1.IN_PROJECT_VENV_PATH], primaryKey, fbKeys);
-        return hitKey === primaryKey;
-    });
-}
-exports.restore = restore;
-
-
-/***/ }),
-
-/***/ "./src/constants.ts":
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.IN_PROJECT_VENV_PATH = void 0;
-const path = __importStar(__webpack_require__("path"));
-exports.IN_PROJECT_VENV_PATH = path.join(process.cwd(), '.venv');
-
-
-/***/ }),
-
-/***/ "./src/main.ts":
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const fs_1 = __webpack_require__("fs");
-const core = __importStar(__webpack_require__("./node_modules/@actions/core/lib/core.js"));
-const exec_1 = __webpack_require__("./node_modules/@actions/exec/lib/exec.js");
-const utils_1 = __webpack_require__("./src/utils.ts");
-const cache = __importStar(__webpack_require__("./src/cache.ts"));
-const poetry = __importStar(__webpack_require__("./src/poetry.ts"));
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const extras = core
-            .getInput('extras', { required: false })
-            .split('\n')
-            .filter(x => x !== '');
-        extras.sort();
-        const additionalArgs = core
-            .getInput('install_args', { required: false })
-            .split(' ')
-            .filter(x => x !== '');
-        const pythonVersion = yield (0, utils_1.getPythonVersion)();
-        const poetryVersion = yield poetry.getVersion();
-        core.info(`python version: ${pythonVersion}`);
-        core.info(`poetry version: ${poetryVersion}`);
-        yield cache.restore(pythonVersion, poetryVersion, extras);
-        yield poetry.config('virtualenvs.in-project', 'true');
-        if ((0, utils_1.isWindows)() && !(0, fs_1.existsSync)('.venv')) {
-            yield (0, exec_1.exec)('python -m venv .venv');
-        }
-        yield poetry.install(extras, additionalArgs);
-        yield cache.setup(pythonVersion, poetryVersion, extras);
-        (0, utils_1.enableVenv)();
-    });
-}
-run().catch(e => {
-    core.setFailed(e);
-    throw e;
-});
-
-
-/***/ }),
-
-/***/ "./src/poetry.ts":
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getVersion = exports.install = exports.config = void 0;
-const semver = __importStar(__webpack_require__("./node_modules/semver/index.js"));
-const exec_1 = __webpack_require__("./node_modules/@actions/exec/lib/exec.js");
-function config(key, value) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const args = ['config', key, value];
-        yield (0, exec_1.exec)('poetry', args);
-    });
-}
-exports.config = config;
-function install(extras, additionalArgs) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const args = ['install'];
-        for (const extra of extras) {
-            args.push('-E', extra);
-        }
-        if (additionalArgs.length) {
-            args.push(...additionalArgs);
-        }
-        const poetryVersion = yield getVersion();
-        if (semver.gte(poetryVersion, '1.1.0')) {
-            if (semver.gte(poetryVersion, '1.2.0')) {
-                args.push('--sync');
-            }
-            else {
-                args.push('--remove-untracked');
-            }
-        }
-        yield (0, exec_1.exec)('poetry', args, {
-            env: {
-                PATH: process.env.PATH || '',
-                PYTHONIOENCODING: 'utf-8',
-            }
-        });
-    });
-}
-exports.install = install;
-const pattern = /Poetry \(version (.*)\)/;
-function getVersion() {
-    return __awaiter(this, void 0, void 0, function* () {
-        let output = '';
-        const options = {
-            silent: true,
-            listeners: {
-                stdout: (data) => {
-                    output += data.toString();
-                }
-            }
-        };
-        yield (0, exec_1.exec)('poetry', ['--version'], options);
-        if (pattern.test(output)) {
-            return pattern.exec(output)[1];
-        }
-        return output.replace('Poetry version ', '');
-    });
-}
-exports.getVersion = getVersion;
-
-
-/***/ }),
-
-/***/ "./src/utils.ts":
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isWindows = exports.enableVenv = exports.hashString = exports.getPythonVersion = void 0;
-const crypto_1 = __importDefault(__webpack_require__("crypto"));
-const path_1 = __importDefault(__webpack_require__("path"));
-const exec_1 = __webpack_require__("./node_modules/@actions/exec/lib/exec.js");
-const core = __importStar(__webpack_require__("./node_modules/@actions/core/lib/core.js"));
-const constants_1 = __webpack_require__("./src/constants.ts");
-function getPythonVersion() {
-    return __awaiter(this, void 0, void 0, function* () {
-        let myOutput = '';
-        const options = {
-            silent: true,
-            listeners: {
-                stdout: (data) => {
-                    myOutput += data.toString();
-                }
-            }
-        };
-        yield (0, exec_1.exec)('python', ['-VV'], options);
-        return myOutput;
-    });
-}
-exports.getPythonVersion = getPythonVersion;
-function hashString(s) {
-    const md5 = crypto_1.default.createHash('md5');
-    return md5.update(s).digest('hex');
-}
-exports.hashString = hashString;
-function enableVenv() {
-    if (process.platform === 'linux' || process.platform === 'darwin') {
-        core.addPath(path_1.default.join(constants_1.IN_PROJECT_VENV_PATH, 'bin'));
-    }
-    else if (process.platform === 'win32') {
-        core.addPath(path_1.default.join(constants_1.IN_PROJECT_VENV_PATH, 'Scripts'));
-    }
-}
-exports.enableVenv = enableVenv;
-function isWindows() {
-    return process.platform === 'win32';
-}
-exports.isWindows = isWindows;
-
-
-/***/ }),
-
 /***/ "./node_modules/tunnel/index.js":
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -63492,11 +63088,220 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__("./src/main.ts");
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __webpack_require__("fs");
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __webpack_require__("./node_modules/@actions/core/lib/core.js");
+// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
+var exec = __webpack_require__("./node_modules/@actions/exec/lib/exec.js");
+// EXTERNAL MODULE: external "crypto"
+var external_crypto_ = __webpack_require__("crypto");
+var external_crypto_default = /*#__PURE__*/__webpack_require__.n(external_crypto_);
+// EXTERNAL MODULE: external "path"
+var external_path_ = __webpack_require__("path");
+var external_path_default = /*#__PURE__*/__webpack_require__.n(external_path_);
+;// CONCATENATED MODULE: ./src/constants.ts
+
+
+const IN_PROJECT_VENV_PATH = external_path_.join(process.cwd(), ".venv");
+
+;// CONCATENATED MODULE: ./src/utils.ts
+
+
+
+
+
+
+async function getPythonVersion() {
+  let myOutput = "";
+  const options = {
+    silent: true,
+    listeners: {
+      stdout: (data) => {
+        myOutput += data.toString();
+      }
+    }
+  };
+  await (0,exec.exec)("python", ["-VV"], options);
+  return myOutput;
+}
+function hashString(s) {
+  const md5 = external_crypto_default().createHash("md5");
+  return md5.update(s).digest("hex");
+}
+function enableVenv() {
+  if (process.platform === "linux" || process.platform === "darwin") {
+    core.addPath(external_path_default().join(IN_PROJECT_VENV_PATH, "bin"));
+  } else if (process.platform === "win32") {
+    core.addPath(external_path_default().join(IN_PROJECT_VENV_PATH, "Scripts"));
+  }
+}
+function isWindows() {
+  return process.platform === "win32";
+}
+
+// EXTERNAL MODULE: external "os"
+var external_os_ = __webpack_require__("os");
+// EXTERNAL MODULE: ./node_modules/@actions/cache/lib/cache.js
+var cache = __webpack_require__("./node_modules/@actions/cache/lib/cache.js");
+;// CONCATENATED MODULE: ./src/cache.ts
+
+
+
+
+
+
+
+
+function cacheKeyComponents(pyVersion, poetryVersion, extras) {
+  const keys = [
+    "poetry",
+    "deps",
+    "6",
+    hashString(external_os_.platform() + external_os_.arch() + external_os_.release()),
+    hashString(pyVersion),
+    poetryLockCacheKey()
+  ];
+  if (extras.length > 0) {
+    keys.push(hashString(extras.join("_")));
+  }
+  return keys;
+}
+function fallbackKeys(pyVersion, poetryVersion, extras) {
+  const keys = [];
+  const components = cacheKeyComponents(pyVersion, poetryVersion, extras);
+  for (let index = 5; index < components.length; index++) {
+    keys.unshift(components.slice(0, index).join("-"));
+  }
+  return keys;
+}
+function poetryLockCacheKey() {
+  return hashString(external_fs_.readFileSync("poetry.lock").toString());
+}
+async function setup(pythonVersion, poetryVersion, extras) {
+  try {
+    const key = cacheKeyComponents(pythonVersion, poetryVersion, extras).join("-");
+    core.info(`cache with key ${key}`);
+    core.debug(IN_PROJECT_VENV_PATH);
+    await cache.saveCache(
+      [IN_PROJECT_VENV_PATH],
+      key
+    );
+  } catch (e) {
+    if (e instanceof cache.ReserveCacheError) {
+      if (e.message.includes("another job may be creating this cache")) {
+        return;
+      }
+      throw e;
+    }
+    throw e;
+  }
+}
+async function restore(pythonVersion, poetryVersion, extras) {
+  const primaryKey = cacheKeyComponents(pythonVersion, poetryVersion, extras).join("-");
+  const fbKeys = fallbackKeys(pythonVersion, poetryVersion, extras);
+  core.info(`restore cache with key ${primaryKey}`);
+  core.info(`fallback to ${fbKeys.toString()}`);
+  core.debug(IN_PROJECT_VENV_PATH);
+  const hitKey = await cache.restoreCache(
+    [IN_PROJECT_VENV_PATH],
+    primaryKey,
+    fbKeys
+  );
+  return hitKey === primaryKey;
+}
+
+// EXTERNAL MODULE: ./node_modules/semver/index.js
+var semver = __webpack_require__("./node_modules/semver/index.js");
+;// CONCATENATED MODULE: ./src/poetry.ts
+
+
+
+async function config(key, value) {
+  const args = ["config", key, value];
+  await (0,exec.exec)("poetry", args);
+}
+async function install(extras, additionalArgs) {
+  const args = ["install"];
+  for (const extra of extras) {
+    args.push("-E", extra);
+  }
+  if (additionalArgs.length > 0) {
+    args.push(...additionalArgs);
+  }
+  const poetryVersion = await getVersion();
+  if (semver.gte(poetryVersion, "1.1.0")) {
+    if (semver.gte(poetryVersion, "1.2.0")) {
+      args.push("--sync");
+    } else {
+      args.push("--remove-untracked");
+    }
+  }
+  await (0,exec.exec)("poetry", args, {
+    env: {
+      PATH: process.env.PATH ?? "",
+      PYTHONIOENCODING: "utf-8"
+    }
+  });
+}
+const pattern = /Poetry \(version (.*)\)/;
+async function getVersion() {
+  let output = "";
+  const options = {
+    silent: true,
+    listeners: {
+      stdout: (data) => {
+        output += data.toString();
+      }
+    }
+  };
+  await (0,exec.exec)("poetry", ["--version"], options);
+  const match = pattern.exec(output);
+  if (match !== null && match.length >= 1) {
+    return match[1];
+  }
+  return output.replace("Poetry version ", "");
+}
+
+;// CONCATENATED MODULE: ./package.json
+const package_namespaceObject = {"i8":"1.2.5"};
+;// CONCATENATED MODULE: ./src/main.ts
+
+
+
+
+
+
+
+
+async function run() {
+  core.info(`trim21/install-poetry-poetry@${package_namespaceObject.i8}`);
+  const extras = core.getInput("extras", { required: false }).split("\n").filter((x) => x !== "").sort();
+  const additionalArgs = core.getInput("install_args", { required: false }).split(" ").filter((x) => x !== "");
+  const pythonVersion = await getPythonVersion();
+  const poetryVersion = await getVersion();
+  core.info(`python version: ${pythonVersion}`);
+  core.info(`poetry version: ${poetryVersion}`);
+  await restore(pythonVersion, poetryVersion, extras);
+  await config("virtualenvs.in-project", "true");
+  if (isWindows() && !(0,external_fs_.existsSync)(".venv")) {
+    await (0,exec.exec)("python -m venv .venv");
+  }
+  await install(extras, additionalArgs);
+  await setup(pythonVersion, poetryVersion, extras);
+  enableVenv();
+}
+run().catch((e) => {
+  core.setFailed(e);
+  throw e;
+});
+
+})();
+
 /******/ })()
 ;
