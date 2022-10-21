@@ -25,7 +25,7 @@ const webpackConfig = {
         options: {
           loader: 'ts',
           target: 'node16',
-          charset: 'utf-8'
+          charset: 'utf8'
         }
       },
     ],
