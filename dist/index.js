@@ -3249,7 +3249,6 @@ const file_command_1 = __webpack_require__("./node_modules/@actions/core/lib/fil
 const utils_1 = __webpack_require__("./node_modules/@actions/core/lib/utils.js");
 const os = __importStar(__webpack_require__("os"));
 const path = __importStar(__webpack_require__("path"));
-const uuid_1 = __webpack_require__("./node_modules/uuid/dist/esm-node/index.js");
 const oidc_utils_1 = __webpack_require__("./node_modules/@actions/core/lib/oidc-utils.js");
 /**
  * The code to exit an action
@@ -3279,20 +3278,9 @@ function exportVariable(name, val) {
     process.env[name] = convertedVal;
     const filePath = process.env['GITHUB_ENV'] || '';
     if (filePath) {
-        const delimiter = `ghadelimiter_${uuid_1.v4()}`;
-        // These should realistically never happen, but just in case someone finds a way to exploit uuid generation let's not allow keys or values that contain the delimiter.
-        if (name.includes(delimiter)) {
-            throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
-        }
-        if (convertedVal.includes(delimiter)) {
-            throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
-        }
-        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
-        file_command_1.issueCommand('ENV', commandValue);
+        return file_command_1.issueFileCommand('ENV', file_command_1.prepareKeyValueMessage(name, val));
     }
-    else {
-        command_1.issueCommand('set-env', { name }, convertedVal);
-    }
+    command_1.issueCommand('set-env', { name }, convertedVal);
 }
 exports.exportVariable = exportVariable;
 /**
@@ -3310,7 +3298,7 @@ exports.setSecret = setSecret;
 function addPath(inputPath) {
     const filePath = process.env['GITHUB_PATH'] || '';
     if (filePath) {
-        file_command_1.issueCommand('PATH', inputPath);
+        file_command_1.issueFileCommand('PATH', inputPath);
     }
     else {
         command_1.issueCommand('add-path', {}, inputPath);
@@ -3350,7 +3338,10 @@ function getMultilineInput(name, options) {
     const inputs = getInput(name, options)
         .split('\n')
         .filter(x => x !== '');
-    return inputs;
+    if (options && options.trimWhitespace === false) {
+        return inputs;
+    }
+    return inputs.map(input => input.trim());
 }
 exports.getMultilineInput = getMultilineInput;
 /**
@@ -3383,8 +3374,12 @@ exports.getBooleanInput = getBooleanInput;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setOutput(name, value) {
+    const filePath = process.env['GITHUB_OUTPUT'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('OUTPUT', file_command_1.prepareKeyValueMessage(name, value));
+    }
     process.stdout.write(os.EOL);
-    command_1.issueCommand('set-output', { name }, value);
+    command_1.issueCommand('set-output', { name }, utils_1.toCommandValue(value));
 }
 exports.setOutput = setOutput;
 /**
@@ -3513,7 +3508,11 @@ exports.group = group;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function saveState(name, value) {
-    command_1.issueCommand('save-state', { name }, value);
+    const filePath = process.env['GITHUB_STATE'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('STATE', file_command_1.prepareKeyValueMessage(name, value));
+    }
+    command_1.issueCommand('save-state', { name }, utils_1.toCommandValue(value));
 }
 exports.saveState = saveState;
 /**
@@ -3579,13 +3578,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.issueCommand = void 0;
+exports.prepareKeyValueMessage = exports.issueFileCommand = void 0;
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const fs = __importStar(__webpack_require__("fs"));
 const os = __importStar(__webpack_require__("os"));
+const uuid_1 = __webpack_require__("./node_modules/uuid/dist/esm-node/index.js");
 const utils_1 = __webpack_require__("./node_modules/@actions/core/lib/utils.js");
-function issueCommand(command, message) {
+function issueFileCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
     if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
@@ -3597,7 +3597,22 @@ function issueCommand(command, message) {
         encoding: 'utf8'
     });
 }
-exports.issueCommand = issueCommand;
+exports.issueFileCommand = issueFileCommand;
+function prepareKeyValueMessage(key, value) {
+    const delimiter = `ghadelimiter_${uuid_1.v4()}`;
+    const convertedValue = utils_1.toCommandValue(value);
+    // These should realistically never happen, but just in case someone finds a
+    // way to exploit uuid generation let's not allow keys or values that contain
+    // the delimiter.
+    if (key.includes(delimiter)) {
+        throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+    }
+    if (convertedValue.includes(delimiter)) {
+        throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+    }
+    return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
+}
+exports.prepareKeyValueMessage = prepareKeyValueMessage;
 //# sourceMappingURL=file-command.js.map
 
 /***/ }),
@@ -39422,6 +39437,8 @@ class Poller {
      * @param operation - Must contain the basic properties of `PollOperation<State, TResult>`.
      */
     constructor(operation) {
+        /** controls whether to throw an error if the operation failed or was canceled. */
+        this.resolveOnUnsuccessful = false;
         this.stopped = true;
         this.pollProgressCallbacks = [];
         this.operation = operation;
@@ -39459,15 +39476,10 @@ class Poller {
      */
     async pollOnce(options = {}) {
         if (!this.isDone()) {
-            try {
-                this.operation = await this.operation.update({
-                    abortSignal: options.abortSignal,
-                    fireProgress: this.fireProgress.bind(this),
-                });
-            }
-            catch (e) {
-                this.operation.state.error = e;
-            }
+            this.operation = await this.operation.update({
+                abortSignal: options.abortSignal,
+                fireProgress: this.fireProgress.bind(this),
+            });
         }
         this.processUpdatedState();
     }
@@ -39511,22 +39523,26 @@ class Poller {
     processUpdatedState() {
         if (this.operation.state.error) {
             this.stopped = true;
-            this.reject(this.operation.state.error);
-            throw this.operation.state.error;
+            if (!this.resolveOnUnsuccessful) {
+                this.reject(this.operation.state.error);
+                throw this.operation.state.error;
+            }
         }
         if (this.operation.state.isCancelled) {
             this.stopped = true;
-            const error = new PollerCancelledError("Operation was canceled");
-            this.reject(error);
-            throw error;
+            if (!this.resolveOnUnsuccessful) {
+                const error = new PollerCancelledError("Operation was canceled");
+                this.reject(error);
+                throw error;
+            }
         }
-        else if (this.isDone() && this.resolve) {
+        if (this.isDone() && this.resolve) {
             // If the poller has finished polling, this means we now have a result.
             // However, it can be the case that TResult is instantiated to void, so
             // we are not expecting a result anyway. To assert that we might not
             // have a result eventually after finishing polling, we cast the result
             // to TResult.
-            this.resolve(this.operation.state.result);
+            this.resolve(this.getResult());
         }
     }
     /**
@@ -51936,6 +51952,7 @@ const isX = id => !id || id.toLowerCase() === 'x' || id === '*'
 // ~1.2, ~1.2.x, ~>1.2, ~>1.2.x --> >=1.2.0 <1.3.0-0
 // ~1.2.3, ~>1.2.3 --> >=1.2.3 <1.3.0-0
 // ~1.2.0, ~>1.2.0 --> >=1.2.0 <1.3.0-0
+// ~0.0.1 --> >=0.0.1 <0.1.0-0
 const replaceTildes = (comp, options) =>
   comp.trim().split(/\s+/).map((c) => {
     return replaceTilde(c, options)
@@ -51975,6 +51992,8 @@ const replaceTilde = (comp, options) => {
 // ^1.2, ^1.2.x --> >=1.2.0 <2.0.0-0
 // ^1.2.3 --> >=1.2.3 <2.0.0-0
 // ^1.2.0 --> >=1.2.0 <2.0.0-0
+// ^0.0.1 --> >=0.0.1 <0.0.2-0
+// ^0.1.0 --> >=0.1.0 <0.2.0-0
 const replaceCarets = (comp, options) =>
   comp.trim().split(/\s+/).map((c) => {
     return replaceCaret(c, options)
@@ -52929,51 +52948,91 @@ module.exports = valid
 
 // just pre-load all the stuff that index.js lazily exports
 const internalRe = __webpack_require__("./node_modules/semver/internal/re.js")
+const constants = __webpack_require__("./node_modules/semver/internal/constants.js")
+const SemVer = __webpack_require__("./node_modules/semver/classes/semver.js")
+const identifiers = __webpack_require__("./node_modules/semver/internal/identifiers.js")
+const parse = __webpack_require__("./node_modules/semver/functions/parse.js")
+const valid = __webpack_require__("./node_modules/semver/functions/valid.js")
+const clean = __webpack_require__("./node_modules/semver/functions/clean.js")
+const inc = __webpack_require__("./node_modules/semver/functions/inc.js")
+const diff = __webpack_require__("./node_modules/semver/functions/diff.js")
+const major = __webpack_require__("./node_modules/semver/functions/major.js")
+const minor = __webpack_require__("./node_modules/semver/functions/minor.js")
+const patch = __webpack_require__("./node_modules/semver/functions/patch.js")
+const prerelease = __webpack_require__("./node_modules/semver/functions/prerelease.js")
+const compare = __webpack_require__("./node_modules/semver/functions/compare.js")
+const rcompare = __webpack_require__("./node_modules/semver/functions/rcompare.js")
+const compareLoose = __webpack_require__("./node_modules/semver/functions/compare-loose.js")
+const compareBuild = __webpack_require__("./node_modules/semver/functions/compare-build.js")
+const sort = __webpack_require__("./node_modules/semver/functions/sort.js")
+const rsort = __webpack_require__("./node_modules/semver/functions/rsort.js")
+const gt = __webpack_require__("./node_modules/semver/functions/gt.js")
+const lt = __webpack_require__("./node_modules/semver/functions/lt.js")
+const eq = __webpack_require__("./node_modules/semver/functions/eq.js")
+const neq = __webpack_require__("./node_modules/semver/functions/neq.js")
+const gte = __webpack_require__("./node_modules/semver/functions/gte.js")
+const lte = __webpack_require__("./node_modules/semver/functions/lte.js")
+const cmp = __webpack_require__("./node_modules/semver/functions/cmp.js")
+const coerce = __webpack_require__("./node_modules/semver/functions/coerce.js")
+const Comparator = __webpack_require__("./node_modules/semver/classes/comparator.js")
+const Range = __webpack_require__("./node_modules/semver/classes/range.js")
+const satisfies = __webpack_require__("./node_modules/semver/functions/satisfies.js")
+const toComparators = __webpack_require__("./node_modules/semver/ranges/to-comparators.js")
+const maxSatisfying = __webpack_require__("./node_modules/semver/ranges/max-satisfying.js")
+const minSatisfying = __webpack_require__("./node_modules/semver/ranges/min-satisfying.js")
+const minVersion = __webpack_require__("./node_modules/semver/ranges/min-version.js")
+const validRange = __webpack_require__("./node_modules/semver/ranges/valid.js")
+const outside = __webpack_require__("./node_modules/semver/ranges/outside.js")
+const gtr = __webpack_require__("./node_modules/semver/ranges/gtr.js")
+const ltr = __webpack_require__("./node_modules/semver/ranges/ltr.js")
+const intersects = __webpack_require__("./node_modules/semver/ranges/intersects.js")
+const simplifyRange = __webpack_require__("./node_modules/semver/ranges/simplify.js")
+const subset = __webpack_require__("./node_modules/semver/ranges/subset.js")
 module.exports = {
+  parse,
+  valid,
+  clean,
+  inc,
+  diff,
+  major,
+  minor,
+  patch,
+  prerelease,
+  compare,
+  rcompare,
+  compareLoose,
+  compareBuild,
+  sort,
+  rsort,
+  gt,
+  lt,
+  eq,
+  neq,
+  gte,
+  lte,
+  cmp,
+  coerce,
+  Comparator,
+  Range,
+  satisfies,
+  toComparators,
+  maxSatisfying,
+  minSatisfying,
+  minVersion,
+  validRange,
+  outside,
+  gtr,
+  ltr,
+  intersects,
+  simplifyRange,
+  subset,
+  SemVer,
   re: internalRe.re,
   src: internalRe.src,
   tokens: internalRe.t,
-  SEMVER_SPEC_VERSION: (__webpack_require__("./node_modules/semver/internal/constants.js").SEMVER_SPEC_VERSION),
-  SemVer: __webpack_require__("./node_modules/semver/classes/semver.js"),
-  compareIdentifiers: (__webpack_require__("./node_modules/semver/internal/identifiers.js").compareIdentifiers),
-  rcompareIdentifiers: (__webpack_require__("./node_modules/semver/internal/identifiers.js").rcompareIdentifiers),
-  parse: __webpack_require__("./node_modules/semver/functions/parse.js"),
-  valid: __webpack_require__("./node_modules/semver/functions/valid.js"),
-  clean: __webpack_require__("./node_modules/semver/functions/clean.js"),
-  inc: __webpack_require__("./node_modules/semver/functions/inc.js"),
-  diff: __webpack_require__("./node_modules/semver/functions/diff.js"),
-  major: __webpack_require__("./node_modules/semver/functions/major.js"),
-  minor: __webpack_require__("./node_modules/semver/functions/minor.js"),
-  patch: __webpack_require__("./node_modules/semver/functions/patch.js"),
-  prerelease: __webpack_require__("./node_modules/semver/functions/prerelease.js"),
-  compare: __webpack_require__("./node_modules/semver/functions/compare.js"),
-  rcompare: __webpack_require__("./node_modules/semver/functions/rcompare.js"),
-  compareLoose: __webpack_require__("./node_modules/semver/functions/compare-loose.js"),
-  compareBuild: __webpack_require__("./node_modules/semver/functions/compare-build.js"),
-  sort: __webpack_require__("./node_modules/semver/functions/sort.js"),
-  rsort: __webpack_require__("./node_modules/semver/functions/rsort.js"),
-  gt: __webpack_require__("./node_modules/semver/functions/gt.js"),
-  lt: __webpack_require__("./node_modules/semver/functions/lt.js"),
-  eq: __webpack_require__("./node_modules/semver/functions/eq.js"),
-  neq: __webpack_require__("./node_modules/semver/functions/neq.js"),
-  gte: __webpack_require__("./node_modules/semver/functions/gte.js"),
-  lte: __webpack_require__("./node_modules/semver/functions/lte.js"),
-  cmp: __webpack_require__("./node_modules/semver/functions/cmp.js"),
-  coerce: __webpack_require__("./node_modules/semver/functions/coerce.js"),
-  Comparator: __webpack_require__("./node_modules/semver/classes/comparator.js"),
-  Range: __webpack_require__("./node_modules/semver/classes/range.js"),
-  satisfies: __webpack_require__("./node_modules/semver/functions/satisfies.js"),
-  toComparators: __webpack_require__("./node_modules/semver/ranges/to-comparators.js"),
-  maxSatisfying: __webpack_require__("./node_modules/semver/ranges/max-satisfying.js"),
-  minSatisfying: __webpack_require__("./node_modules/semver/ranges/min-satisfying.js"),
-  minVersion: __webpack_require__("./node_modules/semver/ranges/min-version.js"),
-  validRange: __webpack_require__("./node_modules/semver/ranges/valid.js"),
-  outside: __webpack_require__("./node_modules/semver/ranges/outside.js"),
-  gtr: __webpack_require__("./node_modules/semver/ranges/gtr.js"),
-  ltr: __webpack_require__("./node_modules/semver/ranges/ltr.js"),
-  intersects: __webpack_require__("./node_modules/semver/ranges/intersects.js"),
-  simplifyRange: __webpack_require__("./node_modules/semver/ranges/simplify.js"),
-  subset: __webpack_require__("./node_modules/semver/ranges/subset.js"),
+  SEMVER_SPEC_VERSION: constants.SEMVER_SPEC_VERSION,
+  compareIdentifiers: identifiers.compareIdentifiers,
+  rcompareIdentifiers: identifiers.rcompareIdentifiers,
 }
 
 
@@ -54096,16 +54155,18 @@ const cache_1 = __webpack_require__("./node_modules/@actions/cache/lib/cache.js"
 const utils_1 = __webpack_require__("./src/utils.ts");
 const constants_1 = __webpack_require__("./src/constants.ts");
 function cacheKeyComponents(pyVersion, poetryVersion, extras) {
-    return [
+    const keys = [
         'poetry',
         'deps',
-        '5',
+        '6',
         (0, utils_1.hashString)(os.platform() + os.arch() + os.release()),
         (0, utils_1.hashString)(pyVersion),
-        (0, utils_1.hashString)(poetryVersion),
         poetryLockCacheKey(),
-        (0, utils_1.hashString)(extras.join('_')),
     ];
+    if (extras.length) {
+        keys.push((0, utils_1.hashString)(extras.join('_')));
+    }
+    return keys;
 }
 function fallbackKeys(pyVersion, poetryVersion, extras) {
     const keys = [];
@@ -54430,7 +54491,7 @@ function getPythonVersion() {
 }
 exports.getPythonVersion = getPythonVersion;
 function hashString(s) {
-    const md5 = crypto_1.default.createHash('sha256');
+    const md5 = crypto_1.default.createHash('md5');
     return md5.update(s).digest('hex');
 }
 exports.hashString = hashString;
