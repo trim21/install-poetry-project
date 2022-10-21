@@ -9,16 +9,20 @@ import { hashString } from './utils'
 import { IN_PROJECT_VENV_PATH } from './constants'
 
 function cacheKeyComponents (pyVersion: string, poetryVersion: string, extras: string[]): string[] {
-  return [
+  const keys = [
     'poetry',
     'deps',
-    '5',
+    '6',
     hashString(os.platform() + os.arch() + os.release()),
     hashString(pyVersion),
-    hashString(poetryVersion),
     poetryLockCacheKey(),
-    hashString(extras.join('_')),
   ]
+
+  if (extras.length) {
+    keys.push(hashString(extras.join('_')))
+  }
+
+  return keys
 }
 
 function fallbackKeys (pyVersion: string, poetryVersion: string, extras: string[]): string[] {

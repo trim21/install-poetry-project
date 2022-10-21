@@ -22,7 +22,7 @@ export async function getPythonVersion (): Promise<string> {
 }
 
 export function hashString (s: string): string {
-  const md5 = crypto.createHash('sha256')
+  const md5 = crypto.createHash('md5')
   return md5.update(s).digest('hex')
 }
 
