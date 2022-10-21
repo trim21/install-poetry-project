@@ -6,10 +6,10 @@ import { exec } from '@actions/exec'
 import { enableVenv, getPythonVersion, isWindows } from './utils'
 import * as cache from './cache'
 import * as poetry from './poetry'
-import pkg from '../package.json'
+import { version } from '../package.json'
 
 async function run (): Promise<void> {
-  core.info(`trim21/install-poetry-poetry@${pkg.version}`)
+  core.info(`trim21/install-poetry-poetry@${version}`)
   const extras = core
     .getInput('extras', { required: false })
     .split('\n')
