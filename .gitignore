@@ -104,3 +104,4 @@ coverage/
 .vscode
 
 dist/index.js
+dist/index.js*

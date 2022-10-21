@@ -5,7 +5,6 @@ const webpackConfig = {
     extensions: ['.js', '.ts'],
   },
   optimization: {
-    minimize: false,
     moduleIds: 'named',
   },
   mode: 'production',
