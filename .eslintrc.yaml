@@ -1,5 +1,5 @@
 extends:
-  - standard
+  - standard-with-typescript
   - plugin:import/recommended
   - plugin:import/typescript # this line does the trick
 
@@ -13,7 +13,7 @@ plugins:
 parser: "@typescript-eslint/parser"
 
 overrides:
-  - files: ["*.test.ts", "*.test.js"]
+  - files: [ "*.test.ts", "*.test.js" ]
     env:
       "jest/globals": true
     rules:
@@ -24,14 +24,15 @@ overrides:
       "jest/valid-expect": "error"
 
 parserOptions:
+  project: "./tsconfig.json"
   sourceType: module
   ecmaVersion: 6
 
 rules:
   comma-dangle: 0
-  "import/no-unused-modules": [1, { "unusedExports": true }]
+  "import/no-unused-modules": [ 1, { "unusedExports": true } ]
   "no-unused-vars": "off"
-  "@typescript-eslint/no-unused-vars": ["error"]
+  "@typescript-eslint/no-unused-vars": [ "error" ]
   "import/order":
     [
       "error",
@@ -41,7 +42,7 @@ rules:
           [
             "builtin",
             "external",
-            ["index", "sibling", "parent"],
+            [ "index", "sibling", "parent" ],
             "internal",
             "object",
           ],

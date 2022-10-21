@@ -12,7 +12,7 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
   for (const extra of extras) {
     args.push('-E', extra)
   }
-  if (additionalArgs.length) {
+  if (additionalArgs.length > 0) {
     args.push(...additionalArgs)
   }
 
@@ -27,8 +27,8 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
 
   await exec('poetry', args, {
     env: {
-      PATH: process.env.PATH || '',
-      PYTHONIOENCODING: 'utf-8',
+      PATH: process.env.PATH ?? '',
+      PYTHONIOENCODING: 'utf-8'
     }
   })
 }
@@ -47,8 +47,9 @@ export async function getVersion (): Promise<string> {
   }
 
   await exec('poetry', ['--version'], options)
-  if (pattern.test(output)) {
-    return pattern.exec(output)![1]
+  const match = pattern.exec(output)
+  if (match !== null && match.length >= 1) {
+    return match[1]
   }
   return output.replace('Poetry version ', '')
 }

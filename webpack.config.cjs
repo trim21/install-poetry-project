@@ -19,8 +19,14 @@ const webpackConfig = {
   module: {
     rules: [
       {
-        test: /\.ts$/,
-        loader: 'ts-loader',
+        test: /\.(ts|js)$/,
+        exclude: /node_modules/,
+        loader: 'esbuild-loader',
+        options: {
+          loader: 'ts',
+          target: 'node16',
+          charset: 'utf-8'
+        }
       },
     ],
   },

@@ -15,10 +15,10 @@ function cacheKeyComponents (pyVersion: string, poetryVersion: string, extras: s
     '6',
     hashString(os.platform() + os.arch() + os.release()),
     hashString(pyVersion),
-    poetryLockCacheKey(),
+    poetryLockCacheKey()
   ]
 
-  if (extras.length) {
+  if (extras.length > 0) {
     keys.push(hashString(extras.join('_')))
   }
 
@@ -34,7 +34,7 @@ function fallbackKeys (pyVersion: string, poetryVersion: string, extras: string[
   return keys
 }
 
-function poetryLockCacheKey () {
+function poetryLockCacheKey (): string {
   return hashString(fs.readFileSync('poetry.lock').toString())
 }
 
@@ -53,7 +53,7 @@ export async function setup (
     )
   } catch (e) {
     if (e instanceof ReserveCacheError) {
-      if (e.toString().includes('another job may be creating this cache')) {
+      if (e.message.includes('another job may be creating this cache')) {
         return
       }
       throw e
@@ -70,7 +70,7 @@ export async function restore (
   const primaryKey = cacheKeyComponents(pythonVersion, poetryVersion, extras).join('-')
   const fbKeys: string[] = fallbackKeys(pythonVersion, poetryVersion, extras)
   core.info(`restore cache with key ${primaryKey}`)
-  core.info(`fallback to ${fbKeys}`)
+  core.info(`fallback to ${fbKeys.toString()}`)
   core.debug(IN_PROJECT_VENV_PATH)
   const hitKey = await cache.restoreCache(
     [IN_PROJECT_VENV_PATH],

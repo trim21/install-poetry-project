@@ -14,7 +14,7 @@ async function run (): Promise<void> {
     .getInput('extras', { required: false })
     .split('\n')
     .filter(x => x !== '')
-  extras.sort()
+    .sort()
 
   const additionalArgs = core
     .getInput('install_args', { required: false })
