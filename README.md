@@ -18,6 +18,7 @@ virtualenv environment directory `.venv` is cache.
 - uses: Trim21/install-poetry-project@dist/v1
   with:
     # extras arguments passed to poetry command 
+    # And you don't need to add --sync args, it will be added automatically
     install_args: -vvv --no-root 
     # each deps for one line
     extras: |
