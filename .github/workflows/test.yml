@@ -14,7 +14,7 @@ jobs:
       NODE_VERSION: "16"
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
 
       - name: Setup node
         uses: actions/setup-node@v2
@@ -37,7 +37,7 @@ jobs:
       NODE_VERSION: "16"
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
 
       - name: Setup node
         uses: actions/setup-node@v2
@@ -87,7 +87,7 @@ jobs:
         python_version: [ "3.7", "3.10" ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v2
         with:
           name: dist
@@ -117,7 +117,7 @@ jobs:
         python_version: [ "3.7", "3.10" ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v2
         with:
           name: dist
@@ -142,7 +142,7 @@ jobs:
     needs: test-default
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v2
         with:
           name: dist
