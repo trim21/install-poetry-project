@@ -34,6 +34,7 @@ function cacheKeyComponents (
   return keys
 }
 
+// fallback to same python version's cache
 function fallbackKeys (pyVersion: string, poetryVersion: string, extras: string[], additionalArgs: string[]): string[] {
   const keys = []
   const components = cacheKeyComponents(pyVersion, poetryVersion, extras, additionalArgs)
