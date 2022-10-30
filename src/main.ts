@@ -27,15 +27,19 @@ async function run (): Promise<void> {
   core.info(`python version: ${pythonVersion}`)
   core.info(`poetry version: ${poetryVersion}`)
 
-  await cache.restore(pythonVersion, poetryVersion, extras, additionalArgs)
+  const primaryMatch = await cache.restore(pythonVersion, extras, additionalArgs)
 
   await poetry.config('virtualenvs.in-project', 'true')
-  if (isWindows() && !existsSync('.venv')) {
-    await exec('python -m venv .venv')
-  }
-  await poetry.install(extras, additionalArgs)
 
-  await cache.setup(pythonVersion, poetryVersion, extras, additionalArgs)
+  if (!primaryMatch) {
+    if (isWindows() && !existsSync('.venv')) {
+      await exec('python -m venv .venv')
+    }
+    await poetry.install(extras, additionalArgs)
+
+    await cache.setup(pythonVersion, extras, additionalArgs)
+  }
+
   enableVenv()
 }
 
