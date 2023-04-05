@@ -15,9 +15,8 @@ function cacheKeyComponents (
   const keys = [
     'poetry',
     'deps',
-    '6',
-    hashString(os.platform() + os.arch() + os.release()),
-    hashString(pyVersion),
+    '7',
+    hashString(os.platform() + os.arch() + os.release() + pyVersion),
     poetryLockCacheKey()
   ]
 
