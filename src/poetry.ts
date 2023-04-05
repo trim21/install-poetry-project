@@ -19,9 +19,13 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
   const poetryVersion = await getVersion()
   if (semver.gte(poetryVersion, '1.1.0')) {
     if (semver.gte(poetryVersion, '1.2.0')) {
-      args.push('--sync')
+      if (!args.includes('--sync')) {
+        args.push('--sync')
+      }
     } else {
-      args.push('--remove-untracked')
+      if (!args.includes('--remove-untracked')) {
+        args.push('--remove-untracked')
+      }
     }
   }
 
