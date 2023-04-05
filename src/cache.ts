@@ -12,15 +12,23 @@ function cacheKeyComponents (
   extras: string[],
   additionalArgs: string[]
 ): string[] {
-  return [
+  const keys = [
     'poetry',
     'deps',
     '7',
     hashString(os.platform() + os.arch() + os.release() + pyVersion),
-    poetryLockCacheKey(),
-    hashString(extras.sort().join('_')),
-    hashString(JSON.stringify(additionalArgs))
+    poetryLockCacheKey()
   ]
+
+  if (extras.length !== 0) {
+    hashString(extras.sort().join('_'))
+  }
+
+  if (additionalArgs.length !== 0) {
+    hashString(JSON.stringify(additionalArgs))
+  }
+
+  return keys
 }
 
 // fallback to same python/os/arch version's cache
