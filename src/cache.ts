@@ -37,8 +37,6 @@ function fallbackKeys (pyVersion: string, extras: string[], additionalArgs: stri
   return keys
 }
 
-console.log(fallbackKeys('1', [], ['3']))
-
 function poetryLockCacheKey (): string {
   return hashString(fs.readFileSync('poetry.lock').toString())
 }
