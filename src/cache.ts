@@ -12,34 +12,32 @@ function cacheKeyComponents (
   extras: string[],
   additionalArgs: string[]
 ): string[] {
-  const keys = [
+  return [
     'poetry',
     'deps',
     '7',
     hashString(os.platform() + os.arch() + os.release() + pyVersion),
-    poetryLockCacheKey()
+    poetryLockCacheKey(),
+    hashString(extras.sort().join('_')),
+    hashString(JSON.stringify(additionalArgs))
   ]
-
-  if (extras.length > 0) {
-    keys.push(hashString(extras.join('_')))
-  }
-
-  if (additionalArgs.length > 0) {
-    keys.push(hashString(additionalArgs.join(' ')))
-  }
-
-  return keys
 }
 
-// fallback to same python version's cache
+// fallback to same python/os/arch version's cache
 function fallbackKeys (pyVersion: string, extras: string[], additionalArgs: string[]): string[] {
   const keys = []
   const components = cacheKeyComponents(pyVersion, extras, additionalArgs)
-  for (let index = 5; index < components.length; index++) {
-    keys.unshift(components.slice(0, index).join('-'))
+
+  for (let index = 4; index < components.length; index++) {
+    keys.push(components.slice(0, index).join('-'))
   }
+
+  keys.reverse()
+
   return keys
 }
+
+console.log(fallbackKeys('1', [], ['3']))
 
 function poetryLockCacheKey (): string {
   return hashString(fs.readFileSync('poetry.lock').toString())
