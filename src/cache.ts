@@ -17,7 +17,8 @@ function cacheKeyComponents (
     'deps',
     '7',
     hashString(os.platform() + os.arch() + os.release() + pyVersion),
-    poetryLockCacheKey()
+    hashString(fs.readFileSync('poetry.lock').toString()),
+    hashString(fs.readFileSync('pyproject.toml').toString()),
   ]
 
   if (extras.length !== 0) {
@@ -43,10 +44,6 @@ function fallbackKeys (pyVersion: string, extras: string[], additionalArgs: stri
   keys.reverse()
 
   return keys
-}
-
-function poetryLockCacheKey (): string {
-  return hashString(fs.readFileSync('poetry.lock').toString())
 }
 
 export async function setup (
