@@ -18,7 +18,7 @@ function cacheKeyComponents (
     '7',
     hashString(os.platform() + os.arch() + os.release() + pyVersion),
     hashString(fs.readFileSync('poetry.lock').toString()),
-    hashString(fs.readFileSync('pyproject.toml').toString()),
+    hashString(fs.readFileSync('pyproject.toml').toString())
   ]
 
   if (extras.length !== 0) {
