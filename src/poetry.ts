@@ -31,7 +31,7 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
 
   await exec('poetry', args, {
     env: {
-      PATH: process.env.PATH ?? '',
+      ...process.env,
       PYTHONIOENCODING: 'utf-8',
       PYTHONUNBUFFERED: '1'
     }
