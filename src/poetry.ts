@@ -29,7 +29,6 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
     }
   }
 
-
   await exec('poetry', ['run', 'pip', 'freeze'], {
     env: {
       PATH: process.env.PATH ?? '',

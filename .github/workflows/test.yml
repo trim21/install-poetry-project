@@ -76,7 +76,7 @@ jobs:
         with:
           python-version: "3.8"
 
-      - uses: trim21/setup-poetry@dist/v1
+      - run: pip install poetry==1.4.2
 
       - run: ls dist
 
