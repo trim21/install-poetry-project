@@ -77,6 +77,7 @@ jobs:
           python-version: "3.8"
 
       - run: pip install https://github.com/trim21/python-poetry/archive/debug.zip
+      - run: pip install https://github.com/python-poetry/poetry-core/archive/main.zip -f
 
       - run: ls dist
 
