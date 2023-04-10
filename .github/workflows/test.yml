@@ -79,8 +79,6 @@ jobs:
       - run: pip install https://github.com/trim21/python-poetry/archive/debug.zip
       - run: pip install https://github.com/python-poetry/poetry-core/archive/main.zip --force
 
-      - run: ls dist
-
       - run: poetry install --sync -vvv
 #      - uses: ./dist/
 #        with:
