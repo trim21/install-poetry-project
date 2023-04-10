@@ -59,7 +59,7 @@ jobs:
             action.yml
 
   test-run-windows: # make sure the action works on a clean machine without building
-#    needs: build
+    needs: build
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
@@ -67,10 +67,10 @@ jobs:
           repository: trim21/BGmi
           ref: 27c71b4354ed3fedcb7752afd6e87f85ced8dbb8
 
-#      - uses: actions/download-artifact@v3
-#        with:
-#          name: dist
-#          path: dist
+      - uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist
 
       - uses: actions/setup-python@v4
         with:
@@ -79,7 +79,6 @@ jobs:
       - run: pip install https://github.com/trim21/python-poetry/archive/debug.zip
       - run: pip install https://github.com/python-poetry/poetry-core/archive/main.zip --force
 
-      - run: poetry install --sync -vvv
-#      - uses: ./dist/
-#        with:
-#          install_args: "-vvv --dry-run"
+      - uses: ./dist/
+        with:
+          install_args: "-vvv --dry-run"
