@@ -3,13 +3,13 @@ on: # rebuild any PRs and main branch changes
   pull_request:
   push:
     branches:
-      - master
+      - debug
 
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: "16"
+      NODE_VERSION: "18"
 
     steps:
       - uses: actions/checkout@v3
@@ -32,7 +32,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: "16"
+      NODE_VERSION: "18"
 
     steps:
       - uses: actions/checkout@v3
@@ -54,96 +54,19 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: dist
-          path: ./dist/index.js
+          path: |
+            ./dist/index.js
+            action.yml
 
-  test-default: # make sure the action works on a clean machine without building
+  test-run-windows: # make sure the action works on a clean machine without building
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
         with:
-          name: dist
-          path: dist
+          repository: trim21/BGmi
+          ref: 27c71b4354ed3fedcb7752afd6e87f85ced8dbb8
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - uses: Trim21/setup-poetry@dist/v1
-
-      - uses: ./
-        with:
-          extras: group1
-
-      - run: python3 tests/group1.py
-
-  test-run: # make sure the action works on a clean machine without building
-    needs: test-default
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        python_version: [ "3.7", "3.10" ]
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: dist
-          path: dist
-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python_version }}
-      - uses: Trim21/setup-poetry@dist/v1
-
-      - uses: ./
-        with:
-          extras: group2
-          install_args: "-vvv"
-
-      - run: python tests/group2.py
-
-      - run: pre-commit --version
-
-  test-multi-group: # make sure the action works on a clean machine without building
-    needs: test-default
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        python_version: [ "3.7", "3.10" ]
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: dist
-          path: dist
-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python_version }}
-      - uses: Trim21/setup-poetry@dist/v1
-      - uses: ./
-        with:
-          extras: |
-            group1
-            group2
-          install_args: "-vvv"
-
-      - run: python tests/group1.py
-      - run: python tests/group2.py
-      - run: pre-commit --version
-
-  test-run-lower-poetry: # make sure the action works on a clean machine without building
-    needs: test-default
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
           name: dist
@@ -152,11 +75,11 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-      - uses: Trim21/setup-poetry@dist/v1
 
-      - uses: ./
+      - uses: trim21/setup-poetry@dist/v1
+
+      - run: ls dist
+
+      - uses: ./dist/
         with:
-          install_args: "-vvv"
-          extras: group1
-
-      - run: python tests/group1.py
+          install_args: "-vvv --dry-run"

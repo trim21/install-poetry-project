@@ -29,10 +29,19 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
     }
   }
 
+  await exec('poetry', ['lock', '--no-update', '-vvv'], {
+    env: {
+      PATH: process.env.PATH ?? '',
+      PYTHONIOENCODING: 'utf-8',
+      PYTHONUNBUFFERED: '1'
+    }
+  })
+
   await exec('poetry', args, {
     env: {
       PATH: process.env.PATH ?? '',
-      PYTHONIOENCODING: 'utf-8'
+      PYTHONIOENCODING: 'utf-8',
+      PYTHONUNBUFFERED: '1'
     }
   })
 }
