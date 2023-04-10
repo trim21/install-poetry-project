@@ -1,4 +1,4 @@
-import * as semver from 'semver'
+import * as pep440 from '@renovatebot/pep440'
 import { exec } from '@actions/exec'
 
 export async function config (key: string, value: string): Promise<void> {
@@ -17,8 +17,8 @@ export async function install (extras: string[], additionalArgs: string[]): Prom
   }
 
   const poetryVersion = await getVersion()
-  if (semver.gte(poetryVersion, '1.1.0')) {
-    if (semver.gte(poetryVersion, '1.2.0')) {
+  if (pep440.gte(poetryVersion, '1.1.0')) {
+    if (pep440.gte(poetryVersion, '1.2.0')) {
       if (!args.includes('--sync')) {
         args.push('--sync')
       }
