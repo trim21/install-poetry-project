@@ -9,7 +9,7 @@ import * as poetry from './poetry'
 import { version } from '../package.json'
 
 async function run (): Promise<void> {
-  core.info(`trim21/install-poetry-poetry@${version}`)
+  core.info(`trim21/install-poetry-project@${version}`)
   const extras = core
     .getInput('extras', { required: false })
     .split('\n')
