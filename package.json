@@ -12,6 +12,7 @@
     "all": "npm run lint && npm run build",
     "postinstall": "husky install"
   },
+  "packageManager": "yarn@3.5.0",
   "engines": {
     "node": ">=16.15.0"
   },
