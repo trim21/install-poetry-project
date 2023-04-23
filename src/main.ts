@@ -35,8 +35,11 @@ async function run (): Promise<void> {
     if (isWindows() && !existsSync('.venv')) {
       await exec('python -m venv .venv')
     }
-    await poetry.install(extras, additionalArgs)
+  }
 
+  await poetry.install(extras, additionalArgs)
+
+  if (!primaryMatch) {
     await cache.setup(pythonVersion, extras, additionalArgs)
   }
 
