@@ -22,11 +22,11 @@ function cacheKeyComponents (
   ]
 
   if (extras.length !== 0) {
-    hashString(extras.sort().join('_'))
+    keys.push(hashString(extras.sort().join('_')))
   }
 
   if (additionalArgs.length !== 0) {
-    hashString(JSON.stringify(additionalArgs))
+    keys.push(hashString(JSON.stringify(additionalArgs)))
   }
 
   return keys
