@@ -15,21 +15,28 @@ function cacheKeyComponents (
   const keys = [
     'poetry',
     'deps',
-    '7',
-    hashString(os.platform() + os.arch() + os.release() + pyVersion),
-    hashString(fs.readFileSync('poetry.lock').toString()),
-    hashString(fs.readFileSync('pyproject.toml').toString())
+    '7'
+  ]
+
+  const hashed = [
+    os.platform() + os.arch() + os.release() + pyVersion,
+    fs.readFileSync('poetry.lock').toString(),
+    fs.readFileSync('pyproject.toml').toString()
   ]
 
   if (extras.length !== 0) {
-    keys.push(hashString(extras.sort().join('_')))
+    hashed.push(hashString(extras.sort().join('_')))
   }
 
   if (additionalArgs.length !== 0) {
-    keys.push(hashString(JSON.stringify(additionalArgs)))
+    hashed.push(hashString(JSON.stringify(additionalArgs)))
   }
 
-  return keys
+  if (os.platform() === 'win32') {
+    return [...keys, hashString(hashed.join('\n'))]
+  }
+
+  return [...keys, ...hashed.map(s => hashString(s))]
 }
 
 // fallback to same python/os/arch version's cache
