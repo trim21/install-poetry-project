@@ -75,7 +75,7 @@ export async function restore (
   const primaryKey = cacheKeyComponents(pythonVersion, extras, additionalArgs).join('-')
   const fbKeys: string[] = fallbackKeys(pythonVersion, extras, additionalArgs)
   core.info(`restore cache with key ${primaryKey}`)
-  core.info(`fallback to ${fbKeys.toString()}`)
+  core.info(`fallback to ${JSON.stringify(fbKeys, null, 2)}`)
   core.debug(IN_PROJECT_VENV_PATH)
   const hitKey = await cache.restoreCache(
     [IN_PROJECT_VENV_PATH],
