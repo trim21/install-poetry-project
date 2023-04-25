@@ -1,52 +1,56 @@
-import { existsSync } from 'fs'
+import { existsSync } from "fs";
 
-import * as core from '@actions/core'
-import { exec } from '@actions/exec'
+import * as core from "@actions/core";
+import { exec } from "@actions/exec";
 
-import { enableVenv, getPythonVersion, isWindows } from './utils'
-import * as cache from './cache'
-import * as poetry from './poetry'
-import { version } from '../package.json'
+import { enableVenv, getPythonVersion, isWindows } from "./utils";
+import * as cache from "./cache";
+import * as poetry from "./poetry";
+import { version } from "../package.json";
 
-async function run (): Promise<void> {
-  core.info(`trim21/install-poetry-project@${version}`)
+async function run(): Promise<void> {
+  core.info(`trim21/install-poetry-project@${version}`);
   const extras = core
-    .getInput('extras', { required: false })
-    .split('\n')
-    .filter(x => x !== '')
-    .sort()
+    .getInput("extras", { required: false })
+    .split("\n")
+    .filter((x) => x !== "")
+    .sort();
 
   const additionalArgs = core
-    .getInput('install_args', { required: false })
-    .split(' ')
-    .filter(x => x !== '')
-    .sort()
+    .getInput("install_args", { required: false })
+    .split(" ")
+    .filter((x) => x !== "")
+    .sort();
 
-  const pythonVersion = await getPythonVersion()
-  const poetryVersion = await poetry.getVersion()
-  core.info(`python version: ${pythonVersion}`)
-  core.info(`poetry version: ${poetryVersion}`)
+  const pythonVersion = await getPythonVersion();
+  const poetryVersion = await poetry.getVersion();
+  core.info(`python version: ${pythonVersion}`);
+  core.info(`poetry version: ${poetryVersion}`);
 
-  const primaryMatch = await cache.restore(pythonVersion, extras, additionalArgs)
+  const primaryMatch = await cache.restore(
+    pythonVersion,
+    extras,
+    additionalArgs,
+  );
 
-  await poetry.config('virtualenvs.in-project', 'true')
+  await poetry.config("virtualenvs.in-project", "true");
 
   if (!primaryMatch) {
-    if (isWindows() && !existsSync('.venv')) {
-      await exec('python -m venv .venv')
+    if (isWindows() && !existsSync(".venv")) {
+      await exec("python -m venv .venv");
     }
   }
 
-  await poetry.install(extras, additionalArgs)
+  await poetry.install(extras, additionalArgs);
 
   if (!primaryMatch) {
-    await cache.setup(pythonVersion, extras, additionalArgs)
+    await cache.setup(pythonVersion, extras, additionalArgs);
   }
 
-  enableVenv()
+  enableVenv();
 }
 
-run().catch(e => {
-  core.setFailed(e)
-  throw e
-})
+run().catch((e) => {
+  core.setFailed(e);
+  throw e;
+});

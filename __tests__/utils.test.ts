@@ -1,5 +1,5 @@
-import { hashString } from '../src/utils'
+import { hashString } from "../src/utils";
 
-test('get poetry version', async () => {
-  expect(hashString('')).toBeTruthy()
-})
+test("get poetry version", async () => {
+  expect(hashString("")).toBeTruthy();
+});

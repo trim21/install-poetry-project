@@ -18,8 +18,5 @@
     "esModuleInterop": false
     /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
   },
-  "exclude": [
-    ".venv/",
-    "node_modules",
-  ]
+  "exclude": [".venv/", "node_modules"]
 }
