@@ -1,6 +1,6 @@
 {
   "name": "install-poetry-project",
-  "version": "1.2.19",
+  "version": "1.2.20",
   "private": true,
   "description": "Install poetry project with cached",
   "main": "dist/index.js",
