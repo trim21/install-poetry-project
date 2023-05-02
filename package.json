@@ -10,6 +10,7 @@
     "build": "npx esbuild --bundle --platform=node --legal-comments=external --sourcemap=inline --target=node16 ./src/main.ts --outfile=dist/index.js",
     "test": "jest",
     "all": "npm run lint && npm run build",
+    "lint-staged": "lint-staged",
     "postinstall": "husky install"
   },
   "packageManager": "yarn@3.5.1",
