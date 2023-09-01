@@ -5,14 +5,16 @@ on: # rebuild any PRs and main branch changes
     branches:
       - master
 
+concurrency:
+  cancel-in-progress: true
+  group: "${{ github.workflow }}-${{ github.ref }}"
+
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: "16"
-    concurrency:
-      cancel-in-progress: true
-      group: "${{ github.workflow }}-${{ github.ref }}"
+
     steps:
       - uses: actions/checkout@v3
 
@@ -35,9 +37,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: "16"
-    concurrency:
-      cancel-in-progress: true
-      group: "${{ github.workflow }}-${{ github.ref }}"
     steps:
       - uses: actions/checkout@v3
 
@@ -63,9 +62,6 @@ jobs:
   test-default: # make sure the action works on a clean machine without building
     needs: build
     runs-on: ubuntu-latest
-    concurrency:
-      cancel-in-progress: true
-      group: "${{ github.workflow }}-${{ github.ref }}"
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
@@ -88,9 +84,6 @@ jobs:
   test-run: # make sure the action works on a clean machine without building
     needs: test-default
     runs-on: ${{ matrix.os }}
-    concurrency:
-      cancel-in-progress: true
-      group: "${{ github.workflow }}-${{ github.ref }}"
     strategy:
       fail-fast: false
       matrix:
@@ -121,9 +114,6 @@ jobs:
   test-multi-group: # make sure the action works on a clean machine without building
     needs: test-default
     runs-on: ${{ matrix.os }}
-    concurrency:
-      cancel-in-progress: true
-      group: "${{ github.workflow }}-${{ github.ref }}"
     strategy:
       fail-fast: false
       matrix:
@@ -155,9 +145,6 @@ jobs:
   test-run-lower-poetry: # make sure the action works on a clean machine without building
     needs: test-default
     runs-on: ubuntu-latest
-    concurrency:
-      cancel-in-progress: true
-      group: "${{ github.workflow }}-${{ github.ref }}"
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
