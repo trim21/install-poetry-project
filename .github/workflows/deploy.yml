@@ -3,7 +3,7 @@ name: deploy
 on:
   push:
     tags:
-      - "v1*"
+      - "v2*"
 
 jobs:
   deploy:
@@ -14,7 +14,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: "lts/*"
+          node-version: "20"
           cache: yarn
 
       - run: yarn
@@ -34,7 +34,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           commit_message: deploy ${{ github.ref }}
-          publish_branch: dist/v1
+          publish_branch: dist/v2
           user_name: github-actions[bot]
           user_email: github-actions[bot]@users.noreply.github.com
           tag_name: dist/${{ env.TAG }}
