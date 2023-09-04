@@ -1,0 +1,15 @@
+name: "install poetry project"
+description: "Install poetry project with cached"
+author: "trim21"
+inputs:
+  extras:
+    description: "extras you want to install"
+    default: ""
+    required: false
+  install_args:
+    description: "extras arguments passed to poetry command, for example `-vvv`"
+    default: ""
+    required: false
+runs:
+  using: "node20"
+  main: "dist/index.js"
