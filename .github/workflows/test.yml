@@ -12,47 +12,33 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      NODE_VERSION: "20"
-
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v2
+
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: "16"
+          cache: pnpm
 
-      - uses: actions/cache@v3
-        id: restore-cache
-        with:
-          path: ./node_modules
-          key: yarn-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('yarn.lock') }}
-
-      - run: yarn
-      - run: yarn test
+      - run: pnpm i
+      - run: pnpm run test
       - uses: codecov/codecov-action@v3
 
   build:
     runs-on: ubuntu-latest
-    env:
-      NODE_VERSION: "16"
     steps:
       - uses: actions/checkout@v4
-
+      - uses: pnpm/action-setup@v2
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: "16"
 
-      - uses: actions/cache@v3
-        id: restore-cache
-        with:
-          path: ./node_modules
-          key: yarn-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('yarn.lock') }}
-
-      - run: yarn
-      - run: yarn build
+      - run: pnpm i
+      - run: pnpm run build
 
       - uses: actions/upload-artifact@v3
         with:
