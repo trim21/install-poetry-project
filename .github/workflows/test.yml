@@ -10,6 +10,22 @@ concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "16"
+          cache: pnpm
+
+      - run: pnpm i
+      - run: pnpm run lint
+
   test:
     runs-on: ubuntu-latest
     steps:
