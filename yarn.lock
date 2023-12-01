@@ -1187,10 +1187,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@renovatebot/pep440@npm:3.0.9":
-  version: 3.0.9
-  resolution: "@renovatebot/pep440@npm:3.0.9"
-  checksum: ee0a72c9e70e5ea06b786f447594f31550f0e7afc46689bcc1fd6408666d5b85f7ddab2f6c0a68a888eb12197e10fa8bb1e7a43be0e975fa8f5974b6b1c311eb
+"@renovatebot/pep440@npm:3.0.12":
+  version: 3.0.12
+  resolution: "@renovatebot/pep440@npm:3.0.12"
+  checksum: 7af97dd7717c681cc135ca9a7e2002b0dc15374ceafdb517842a8b086b1f3e140f6e017753d41b239437465f5ba872acb4a9ded34beaacbdf1a2b38e535bf168
   languageName: node
   linkType: hard
 
@@ -1301,13 +1301,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:29.5.7":
-  version: 29.5.7
-  resolution: "@types/jest@npm:29.5.7"
+"@types/jest@npm:29.5.10":
+  version: 29.5.10
+  resolution: "@types/jest@npm:29.5.10"
   dependencies:
     expect: ^29.0.0
     pretty-format: ^29.0.0
-  checksum: e28624ccb0ef1255a03fbbb4b5bc3e5cbcdc450d39e0739985ff679b124198f808c38c8c3e67859c6efc0e848196deeb8cfed028e12a821c511dfc1112a2d6e9
+  checksum: ef385905787db528de9b6beb2688865c0bb276e64256ed60b9a1a6ffc0b75737456cb5e27e952a3241c5845b6a1da487470010dd30f3ca59c8581624c564a823
   languageName: node
   linkType: hard
 
@@ -3667,8 +3667,8 @@ __metadata:
     "@actions/core": 1.10.1
     "@actions/exec": 1.1.1
     "@actions/http-client": 2.2.0
-    "@renovatebot/pep440": 3.0.9
-    "@types/jest": 29.5.7
+    "@renovatebot/pep440": 3.0.12
+    "@types/jest": 29.5.10
     "@types/node": 20.8.10
     "@typescript-eslint/eslint-plugin": 6.9.1
     "@typescript-eslint/parser": 6.9.1
