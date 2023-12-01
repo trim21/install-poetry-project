@@ -23,21 +23,19 @@ jobs:
           node-version: "16"
           cache: pnpm
 
-      - run: pnpm ci
+      - run: pnpm i
       - run: pnpm run test
       - uses: codecov/codecov-action@v3
 
   build:
     runs-on: ubuntu-latest
-    env:
-      NODE_VERSION: "16"
     steps:
       - uses: actions/checkout@v4
-
+      - uses: pnpm/action-setup@v2
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: "16"
 
       - run: pnpm i
       - run: pnpm run build
