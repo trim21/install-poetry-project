@@ -11,15 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v2
+
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: "20"
-          cache: yarn
+          cache: pnpm
 
-      - run: yarn
+      - run: pnpm i
 
-      - run: yarn build
+      - run: pnpm run build
 
       - run: |
           mkdir dist/dist
