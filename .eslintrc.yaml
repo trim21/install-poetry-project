@@ -7,7 +7,6 @@ extends:
 plugins:
   - import
   - promise
-  - standard
   - "@typescript-eslint"
   - jest
 
