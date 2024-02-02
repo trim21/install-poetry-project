@@ -51,6 +51,7 @@ async function run(): Promise<void> {
 }
 
 run().catch((e) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   core.setFailed(e);
   throw e;
 });
