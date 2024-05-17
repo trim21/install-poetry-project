@@ -33,17 +33,21 @@ async function run(): Promise<void> {
     additionalArgs,
   );
 
+  core.info("update poetry config");
   await poetry.config("virtualenvs.in-project", "true");
 
   if (!primaryMatch) {
     if (isWindows() && !existsSync(".venv")) {
+      core.info("create venv on windows");
       await exec("python -m venv .venv");
     }
   }
 
+  core.info("run poetry install");
   await poetry.install(extras, additionalArgs);
 
   if (!primaryMatch) {
+    core.info("save cache");
     await cache.setup(pythonVersion, extras, additionalArgs);
   }
 
