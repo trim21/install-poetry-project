@@ -1,5 +1,4 @@
 extends:
-  - love
   - plugin:import/recommended
   - plugin:import/typescript # this line does the trick
   - prettier
