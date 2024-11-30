@@ -21,8 +21,8 @@ importers:
         specifier: 2.2.3
         version: 2.2.3
       '@renovatebot/pep440':
-        specifier: 3.0.20
-        version: 3.0.20
+        specifier: 4.0.1
+        version: 4.0.1
     devDependencies:
       '@types/jest':
         specifier: 29.5.14
@@ -613,9 +613,9 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@renovatebot/pep440@3.0.20':
-    resolution: {integrity: sha512-Jw8jzHh2r1LAPTrjQlIwh/+8J3N2MqXZgPuTt6HdNeJIBjJskV8bsEfGs9rBzXi/omeHob3BXnvlECu2rCCUYw==}
-    engines: {node: ^18.12.0 || >= 20.0.0, pnpm: ^8.6.11}
+  '@renovatebot/pep440@4.0.1':
+    resolution: {integrity: sha512-jKodfnFIIGjK9PcoB7+2JkDQ+prjv3LHFMUS21F3+IEaiGomrvpiH27+gjyQRRwtSkkRnrxkqjEPdkj2IxC2qA==}
+    engines: {node: ^20.9.0 || ^22.11.0, pnpm: ^9.0.0}
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
@@ -3194,7 +3194,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
-  '@renovatebot/pep440@3.0.20': {}
+  '@renovatebot/pep440@4.0.1': {}
 
   '@rtsao/scc@1.1.0': {}
 
