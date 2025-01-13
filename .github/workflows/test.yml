@@ -64,7 +64,7 @@ jobs:
           path: ./dist/index.js
 
   test-default: # make sure the action works on a clean machine without building
-    needs: build
+    needs: [lint, test, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
