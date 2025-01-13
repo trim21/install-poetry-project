@@ -43,7 +43,7 @@ async function run(): Promise<void> {
     }
   }
 
-  core.info("run poetry install");
+  core.info("run poetry sync/install");
   await poetry.install(extras, additionalArgs);
 
   if (!primaryMatch) {

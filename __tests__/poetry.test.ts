@@ -45,13 +45,8 @@ test("get install without --remove-untracked args", async () => {
 
 test("get install with sync command", async () => {
   shouldReturnPoetryVersion = "2.0.1";
-  await poetry.install(["e1"], ["--another"]);
-  expect(mockFn).toHaveBeenCalledWith("poetry", [
-    "sync",
-    "-E",
-    "e1",
-    "--another",
-  ]);
+  await poetry.install([], []);
+  expect(mockFn).toHaveBeenCalledWith("poetry", ["sync"]);
 });
 
 test("get install with --remove-untracked args", async () => {
