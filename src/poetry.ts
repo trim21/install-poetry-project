@@ -14,19 +14,21 @@ export async function install(
   const args = [];
 
   const poetryVersion = await getVersion();
-  if (pep440.gte(poetryVersion, "1.1.0")) {
-    if (pep440.lte(poetryVersion, "2.0.1")) {
-      args.push("sync");
+  if (pep440.le(poetryVersion, "1.1.0")) {
+    throw new Error("poetry < 1.1.0 is not supported");
+  }
+
+  if (pep440.lte(poetryVersion, "2.0.1")) {
+    args.push("sync");
+  } else {
+    args.push("install");
+    if (pep440.gte(poetryVersion, "1.2.0")) {
+      if (!args.includes("--sync")) {
+        args.push("--sync");
+      }
     } else {
-      args.push("install");
-      if (pep440.gte(poetryVersion, "1.2.0")) {
-        if (!args.includes("--sync")) {
-          args.push("--sync");
-        }
-      } else {
-        if (!args.includes("--remove-untracked")) {
-          args.push("--remove-untracked");
-        }
+      if (!args.includes("--remove-untracked")) {
+        args.push("--remove-untracked");
       }
     }
   }

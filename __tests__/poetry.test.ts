@@ -50,7 +50,7 @@ test("get install with sync command", async () => {
 });
 
 test("get install with --remove-untracked args", async () => {
-  shouldReturnPoetryVersion = "1.0.5";
+  shouldReturnPoetryVersion = "1.1.1";
   await poetry.install(["e1"], ["--another"]);
   expect(mockFn).toHaveBeenCalledWith("poetry", [
     "install",
