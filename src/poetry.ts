@@ -18,7 +18,7 @@ export async function install(
     throw new Error("poetry < 1.1.0 is not supported");
   }
 
-  if (pep440.lte(poetryVersion, "2.0.1")) {
+  if (pep440.gte(poetryVersion, "2.0.1")) {
     args.push("sync");
   } else {
     args.push("install");
