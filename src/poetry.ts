@@ -11,25 +11,31 @@ export async function install(
   extras: string[],
   additionalArgs: string[],
 ): Promise<void> {
-  const args = ["install"];
+  const args = [];
+
+  const poetryVersion = await getVersion();
+  if (pep440.gte(poetryVersion, "1.1.0")) {
+    if (pep440.lte(poetryVersion, "2.0.1")) {
+      args.push("sync");
+    } else {
+      args.push("install");
+      if (pep440.gte(poetryVersion, "1.2.0")) {
+        if (!args.includes("--sync")) {
+          args.push("--sync");
+        }
+      } else {
+        if (!args.includes("--remove-untracked")) {
+          args.push("--remove-untracked");
+        }
+      }
+    }
+  }
+
   for (const extra of extras) {
     args.push("-E", extra);
   }
   if (additionalArgs.length > 0) {
     args.push(...additionalArgs);
-  }
-
-  const poetryVersion = await getVersion();
-  if (pep440.gte(poetryVersion, "1.1.0")) {
-    if (pep440.gte(poetryVersion, "1.2.0")) {
-      if (!args.includes("--sync")) {
-        args.push("--sync");
-      }
-    } else {
-      if (!args.includes("--remove-untracked")) {
-        args.push("--remove-untracked");
-      }
-    }
   }
 
   await exec("poetry", args, {
