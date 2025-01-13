@@ -77,10 +77,9 @@ jobs:
         with:
           python-version: "3.x"
 
-      - uses: Trim21/setup-poetry@dist/v2
+      - uses: trim21/setup-poetry@dist/v2
 
       - uses: ./
-        working-directory: ./tests/fixtures/v2/
         with:
           extras: group1
 
@@ -105,7 +104,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
-      - uses: Trim21/setup-poetry@dist/v2
+      - uses: trim21/setup-poetry@dist/v2
 
       - uses: ./
         with:
@@ -135,7 +134,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
-      - uses: Trim21/setup-poetry@dist/v2
+      - uses: trim21/setup-poetry@dist/v2
       - uses: ./
         with:
           extras: |
@@ -160,7 +159,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.8"
-      - uses: Trim21/setup-poetry@dist/v2
+      - uses: trim21/setup-poetry@dist/v2
 
       - uses: ./
         with:
