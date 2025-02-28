@@ -36,11 +36,11 @@
   "author": "YourNameOrOrganization",
   "license": "MIT",
   "dependencies": {
-    "@actions/cache": "4.0.0",
+    "@actions/cache": "4.0.2",
     "@actions/core": "1.11.1",
     "@actions/exec": "1.1.1",
     "@actions/http-client": "2.2.3",
-    "@renovatebot/pep440": "4.0.1"
+    "@renovatebot/pep440": "4.1.0"
   },
   "devDependencies": {
     "@types/jest": "29.5.14",
