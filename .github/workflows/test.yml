@@ -20,7 +20,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.18.3"
           cache: pnpm
 
       - run: pnpm i
@@ -36,7 +36,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.18.3"
           cache: pnpm
 
       - run: pnpm i
@@ -53,7 +53,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.18.3"
 
       - run: pnpm i
       - run: pnpm run build
@@ -75,7 +75,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.13.2"
 
       - uses: trim21/setup-poetry@dist/v2
 
@@ -159,7 +159,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.12.9"
       - uses: trim21/setup-poetry@dist/v2
 
       - uses: ./
